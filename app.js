@@ -620,10 +620,28 @@ async function copyPreviousWeek() {
       "loading"
     );
 
-    const previousRows =
+    let previousRows =
       await TimesheetStorage.load(
         sourceWeek
       );
+
+    /*
+      Older releases briefly stored some weeks using the Sunday
+      immediately before the correct Monday week-start date.
+      If the normal Monday lookup is empty, check that legacy date.
+    */
+    if (!previousRows.length) {
+      const legacySundayWeek =
+        addDaysToDateString(
+          sourceWeek,
+          -1
+        );
+
+      previousRows =
+        await TimesheetStorage.load(
+          legacySundayWeek
+        );
+    }
 
     if (!previousRows.length) {
       setSaveButtonState("saved");
@@ -846,7 +864,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.5.0-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.5.1-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -2909,6 +2927,8 @@ goToCurrentWeekBtn.addEventListener(
 
 async function initialiseApp() {
   addModeBadge();
+
+  const today = new Date();
 
   weekStart.value =
     getCurrentWeekStartValue();

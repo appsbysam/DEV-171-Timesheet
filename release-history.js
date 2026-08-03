@@ -1,5 +1,14 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.5.1-dev",
+    date: "3 August 2026",
+    changes: [
+      "Fixed the current week failing to load automatically when the app first opens.",
+      "Restored automatic Week Ending and manager date initialization.",
+      "Added compatibility when copying older weeks that were stored using a Sunday week-start date."
+    ]
+  },
+  {
     version: "2.5.0-dev",
     date: "3 August 2026",
     changes: [

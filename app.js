@@ -1,8 +1,8 @@
 const SUPABASE_URL =
-  "https://anfiyirlukdonwvsichi.supabase.co";
+  window.APP_CONFIG.supabaseUrl;
 
 const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_J-TVz3uwbbL0So9djdJhMg_tZOQxq4d";
+  window.APP_CONFIG.supabaseKey;
 
 /*
   Leave this set to false for automatic operation.
@@ -594,6 +594,28 @@ async function refreshManagerControlState() {
    ===================================================== */
 
 function addModeBadge() {
+  document.title =
+    window.APP_CONFIG.pageTitle;
+
+  const brandTitle =
+    document.querySelector(".brand-title");
+
+  if (brandTitle) {
+    brandTitle.textContent =
+      window.APP_CONFIG.appHeading;
+  }
+
+  const devBuildBanner =
+    document.getElementById("devBuildBanner");
+
+  if (devBuildBanner) {
+    devBuildBanner.textContent =
+      window.APP_CONFIG.buildLabel;
+
+    devBuildBanner.hidden =
+      !window.APP_CONFIG.isDevelopment;
+  }
+
   const header =
     document.querySelector(".brand-copy") ||
     document.querySelector(".brand-header");
@@ -619,9 +641,13 @@ function addModeBadge() {
 
   badge.id = "storageModeBadge";
 
-  badge.textContent = LOCAL_MODE
-    ? "● LOCAL MODE • DEV"
-    : "● ONLINE MODE • DEV";
+  badge.textContent =
+    (
+      LOCAL_MODE
+        ? "● LOCAL MODE"
+        : "● ONLINE MODE"
+    ) +
+    (window.APP_CONFIG.modeSuffix || "");
 
   badge.style.display = "inline-block";
   badge.style.marginTop = "6px";
@@ -647,7 +673,7 @@ function addModeBadge() {
 
   const version = document.createElement("div");
   version.className = "app-version";
-  version.textContent = `Version ${window.APP_VERSION || "2.3.0-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.3.1-dev"}`;
 
   wrapper.appendChild(badge);
   wrapper.appendChild(version);

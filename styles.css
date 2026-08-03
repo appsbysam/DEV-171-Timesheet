@@ -2030,3 +2030,8 @@ body.staff-modal-open {
     display: none !important;
   }
 }
+
+
+.dev-build-banner[hidden] {
+  display: none !important;
+}

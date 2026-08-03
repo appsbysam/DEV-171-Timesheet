@@ -1,4 +1,15 @@
 window.RELEASE_HISTORY = [
+  {
+    version: "2.6.0-dev",
+    date: "3 August 2026",
+    changes: [
+      "Rebuilt Previous, Today and Next as modern compact navigation buttons.",
+      "Added clean SVG arrow and calendar icons.",
+      "Made Today permanently visible so the layout never changes or overlaps.",
+      "Today is disabled and highlighted green while viewing the current week.",
+      "All three buttons now remain on one row on desktop and mobile."
+    ]
+  },
   {version:"2.5.5-dev",date:"3 August 2026",changes:["Reduced navigation button widths so Previous, Next and Current Week always fit on one desktop row."]},
 
   {

@@ -872,7 +872,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.5.5-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.6.0-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -1203,6 +1203,10 @@ function getCurrentWeekStartValue() {
 }
 
 async function goToCurrentWeek() {
+  if (goToCurrentWeekBtn.disabled) {
+    return;
+  }
+
   weekStart.value =
     getCurrentWeekStartValue();
 
@@ -1228,8 +1232,19 @@ function updateCurrentWeekHighlight() {
     isCurrentWeek
   );
 
-  goToCurrentWeekBtn.hidden =
+  goToCurrentWeekBtn.hidden = false;
+  goToCurrentWeekBtn.disabled =
     isCurrentWeek;
+
+  goToCurrentWeekBtn.classList.toggle(
+    "is-current",
+    isCurrentWeek
+  );
+
+  goToCurrentWeekBtn.title =
+    isCurrentWeek
+      ? "You are viewing the current week"
+      : "Return to the current week";
 }
 
 /* =====================================================

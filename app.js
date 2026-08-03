@@ -525,6 +525,13 @@ const StaffStorage = {
   }
 };
 
+function formatDateForMessage(dateString) {
+  const [year, month, day] =
+    dateString.split("-");
+
+  return `${day}/${month}/${year}`;
+}
+
 function addDaysToDateString(
   dateString,
   numberOfDays
@@ -620,34 +627,37 @@ async function copyPreviousWeek() {
       "loading"
     );
 
-    let previousRows =
-      await TimesheetStorage.load(
-        sourceWeek
-      );
+    const sourceCandidates = [
+      sourceWeek,
+      addDaysToDateString(sourceWeek, -1)
+    ];
 
-    /*
-      Older releases briefly stored some weeks using the Sunday
-      immediately before the correct Monday week-start date.
-      If the normal Monday lookup is empty, check that legacy date.
-    */
-    if (!previousRows.length) {
-      const legacySundayWeek =
-        addDaysToDateString(
-          sourceWeek,
-          -1
-        );
+    let previousRows = [];
+    let matchedSourceWeek = "";
 
+    for (const candidateWeek of sourceCandidates) {
       previousRows =
         await TimesheetStorage.load(
-          legacySundayWeek
+          candidateWeek
         );
+
+      if (previousRows.length) {
+        matchedSourceWeek =
+          candidateWeek;
+        break;
+      }
     }
 
     if (!previousRows.length) {
+      const environmentName =
+        window.APP_CONFIG.isDevelopment
+          ? "DEV database"
+          : "production database";
+
       setSaveButtonState("saved");
 
       setStatus(
-        "No entries found in the previous week",
+        `No entries found in the ${environmentName} for the previous week starting ${formatDateForMessage(sourceWeek)}`,
         false,
         "saved"
       );
@@ -675,8 +685,8 @@ async function copyPreviousWeek() {
 
     setStatus(
       LOCAL_MODE
-        ? "Previous week copied locally"
-        : "Previous week copied to current week",
+        ? `Week starting ${formatDateForMessage(matchedSourceWeek)} copied locally`
+        : `Week starting ${formatDateForMessage(matchedSourceWeek)} copied into ${formatDateForMessage(destinationWeek)}`,
       false,
       "saved"
     );
@@ -864,7 +874,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.5.1-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.5.2-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 

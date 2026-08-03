@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.5.2-dev",
+    date: "3 August 2026",
+    changes: [
+      "Confirmed Copy Previous Week uses the currently selected week as its destination and searches seven days earlier.",
+      "Added clearer source-week and destination-week messages.",
+      "Added an explicit DEV or production database message when no source records exist.",
+      "Retained compatibility with older Sunday-based week records."
+    ]
+  },
+  {
     version: "2.5.1-dev",
     date: "3 August 2026",
     changes: [

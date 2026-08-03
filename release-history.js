@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.0.3",
+    date: "3 August 2026",
+    changes: [
+      "Hidden the Today button completely while viewing the current week.",
+      "Kept Previous and Next at their established size.",
+      "Today appears only when viewing a past or future week.",
+      "The navigation switches cleanly between two and three equal columns."
+    ]
+  },
+  {
     version: "3.0.2",
     date: "3 August 2026",
     changes: [

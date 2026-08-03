@@ -1113,7 +1113,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.0.2"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.0.3"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -1498,7 +1498,9 @@ function updateCurrentWeekHighlight() {
     isCurrentWeek
   );
 
-  goToCurrentWeekBtn.hidden = false;
+  goToCurrentWeekBtn.hidden =
+    isCurrentWeek;
+
   goToCurrentWeekBtn.disabled =
     isCurrentWeek;
 
@@ -1509,7 +1511,7 @@ function updateCurrentWeekHighlight() {
 
   goToCurrentWeekBtn.title =
     isCurrentWeek
-      ? "You are viewing the current week"
+      ? ""
       : "Return to the current week";
 }
 

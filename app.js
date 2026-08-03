@@ -1,8 +1,8 @@
 const SUPABASE_URL =
-  "https://cebgyyairqctbgrocxgl.supabase.co";
+  "https://anfiyirlukdonwvsichi.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_VFT7GrL1rJtmV0hv0CPrlg_qjZXq4PT";
+  "sb_publishable_J-TVz3uwbbL0So9djdJhMg_tZOQxq4d";
 
 /*
   Leave this set to false for automatic operation.

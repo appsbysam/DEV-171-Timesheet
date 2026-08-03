@@ -1,12 +1,13 @@
 window.RELEASE_HISTORY = [
   {
-    version: "2.6.1-dev",
+    version: "2.7.0-dev",
     date: "3 August 2026",
     changes: [
-      "Reduced the desktop date-field font slightly so full dates fit cleanly.",
-      "Made Today vibrant green when another week is selected.",
-      "Changed Today to a softer light green while already viewing the current week.",
-      "Kept the existing mobile date-field sizing unchanged."
+      "Added a manager-only Generate Roster action.",
+      "Added an editable roster preview for the currently selected week.",
+      "Added Copy Text for pasting directly into WhatsApp.",
+      "Added native Share support on compatible phones and computers.",
+      "Added clear formatting for split shifts and days with no rostered staff."
     ]
   },
   {

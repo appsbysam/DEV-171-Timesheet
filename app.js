@@ -155,6 +155,30 @@ const managerMenuClearBtn =
 const managerMenuCopyPreviousBtn =
   document.getElementById("managerMenuCopyPreviousBtn");
 
+const managerMenuGenerateRosterBtn =
+  document.getElementById("managerMenuGenerateRosterBtn");
+
+const rosterModal =
+  document.getElementById("rosterModal");
+
+const rosterPreview =
+  document.getElementById("rosterPreview");
+
+const rosterMessage =
+  document.getElementById("rosterMessage");
+
+const copyRosterBtn =
+  document.getElementById("copyRosterBtn");
+
+const shareRosterBtn =
+  document.getElementById("shareRosterBtn");
+
+const closeRosterBtn =
+  document.getElementById("closeRosterBtn");
+
+const closeRosterActionBtn =
+  document.getElementById("closeRosterActionBtn");
+
 const managerMenuSignOutBtn =
   document.getElementById("managerMenuSignOutBtn");
 
@@ -705,6 +729,223 @@ async function copyPreviousWeek() {
   }
 }
 
+
+/* =====================================================
+   GENERATE ROSTER
+   ===================================================== */
+
+function formatRosterTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  const [hourText, minuteText] =
+    value.split(":");
+
+  const hour24 =
+    Number(hourText);
+
+  const suffix =
+    hour24 < 12 ? "am" : "pm";
+
+  const hour12 =
+    hour24 % 12 === 0
+      ? 12
+      : hour24 % 12;
+
+  return `${hour12}:${minuteText}${suffix}`;
+}
+
+function buildRosterText() {
+  const lines = [
+    `Roster for week commencing ${formatDateForMessage(weekStart.value)}`,
+    ""
+  ];
+
+  document
+    .querySelectorAll(".day-block")
+    .forEach((block) => {
+      const dayLines = [];
+
+      block
+        .querySelectorAll(".shift-row")
+        .forEach((row) => {
+          const start =
+            row.querySelector(".start").value;
+
+          const finish =
+            row.querySelector(".finish").value;
+
+          const splitStart =
+            row.querySelector(".split-start").value;
+
+          const splitFinish =
+            row.querySelector(".split-finish").value;
+
+          if (!start || !finish) {
+            return;
+          }
+
+          let shiftText =
+            `${row.dataset.employee} ` +
+            `${formatRosterTime(start)} - ` +
+            `${formatRosterTime(finish)}`;
+
+          if (
+            row.classList.contains("has-split-shift") &&
+            splitStart &&
+            splitFinish
+          ) {
+            shiftText +=
+              ` / ${formatRosterTime(splitStart)} - ` +
+              `${formatRosterTime(splitFinish)}`;
+          }
+
+          dayLines.push(shiftText);
+        });
+
+      lines.push(block.dataset.day);
+
+      if (dayLines.length) {
+        lines.push(...dayLines);
+      } else {
+        lines.push("No shifts");
+      }
+
+      lines.push("");
+    });
+
+  return lines
+    .join("\n")
+    .trim();
+}
+
+function setRosterMessage(
+  message,
+  isError = false
+) {
+  rosterMessage.textContent =
+    message;
+
+  rosterMessage.classList.toggle(
+    "is-error",
+    isError
+  );
+}
+
+function openRosterModal() {
+  closeManagerMenu();
+
+  rosterPreview.value =
+    buildRosterText();
+
+  setRosterMessage("");
+
+  shareRosterBtn.hidden =
+    typeof navigator.share !== "function";
+
+  rosterModal.hidden = false;
+  document.body.classList.add(
+    "staff-modal-open"
+  );
+
+  rosterPreview.focus();
+  rosterPreview.setSelectionRange(0, 0);
+}
+
+function closeRosterModal() {
+  rosterModal.hidden = true;
+  setRosterMessage("");
+
+  if (
+    staffModal.hidden &&
+    managerLoginModal.hidden &&
+    managerMenuModal.hidden &&
+    versionHistoryModal.hidden
+  ) {
+    document.body.classList.remove(
+      "staff-modal-open"
+    );
+  }
+}
+
+async function copyRosterText() {
+  const text =
+    rosterPreview.value;
+
+  try {
+    if (
+      navigator.clipboard &&
+      window.isSecureContext
+    ) {
+      await navigator.clipboard.writeText(
+        text
+      );
+    } else {
+      rosterPreview.focus();
+      rosterPreview.select();
+
+      const copied =
+        document.execCommand("copy");
+
+      if (!copied) {
+        throw new Error(
+          "Clipboard access is unavailable."
+        );
+      }
+
+      rosterPreview.setSelectionRange(0, 0);
+    }
+
+    setRosterMessage(
+      "Roster copied. It is ready to paste into WhatsApp."
+    );
+  } catch (error) {
+    console.error(error);
+
+    setRosterMessage(
+      "Unable to copy automatically. Select the roster text and copy it manually.",
+      true
+    );
+  }
+}
+
+async function shareRosterText() {
+  if (
+    typeof navigator.share !== "function"
+  ) {
+    setRosterMessage(
+      "Sharing is not supported by this browser. Use Copy Text instead.",
+      true
+    );
+    return;
+  }
+
+  try {
+    await navigator.share({
+      title:
+        `Roster ${formatDateForMessage(weekStart.value)}`,
+      text:
+        rosterPreview.value
+    });
+
+    setRosterMessage(
+      "Roster shared successfully."
+    );
+  } catch (error) {
+    if (error.name === "AbortError") {
+      return;
+    }
+
+    console.error(error);
+
+    setRosterMessage(
+      "Unable to open the share menu. Use Copy Text instead.",
+      true
+    );
+  }
+}
+
 /* =====================================================
    MANAGER CONTROLS
    ===================================================== */
@@ -872,7 +1113,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.6.1-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.7.0-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -2596,6 +2837,40 @@ managerMenuCopyPreviousBtn.addEventListener(
   copyPreviousWeek
 );
 
+managerMenuGenerateRosterBtn.addEventListener(
+  "click",
+  openRosterModal
+);
+
+copyRosterBtn.addEventListener(
+  "click",
+  copyRosterText
+);
+
+shareRosterBtn.addEventListener(
+  "click",
+  shareRosterText
+);
+
+closeRosterBtn.addEventListener(
+  "click",
+  closeRosterModal
+);
+
+closeRosterActionBtn.addEventListener(
+  "click",
+  closeRosterModal
+);
+
+rosterModal
+  .querySelectorAll("[data-close-roster]")
+  .forEach((element) => {
+    element.addEventListener(
+      "click",
+      closeRosterModal
+    );
+  });
+
 managerMenuClearBtn.addEventListener("click", async () => {
   if (managerMenuClearBtn.disabled) {
     return;
@@ -2743,6 +3018,11 @@ document.addEventListener("keydown", (event) => {
 
   if (!versionHistoryModal.hidden) {
     closeVersionHistory();
+    return;
+  }
+
+  if (!rosterModal.hidden) {
+    closeRosterModal();
   }
 });
 

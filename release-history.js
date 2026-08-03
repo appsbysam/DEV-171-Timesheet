@@ -1,5 +1,17 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.0.0",
+    date: "3 August 2026",
+    changes: [
+      "Prepared the application as the Version 3.0.0 launch build.",
+      "Made version display environment-aware through config.js.",
+      "Production displays Version 3.0.0 while DEV displays Version 3.0.0-dev.",
+      "Made Today vibrant green away from the current week.",
+      "Made Today a very light green while already viewing the current week.",
+      "Kept the smaller desktop date-field font without changing mobile sizing."
+    ]
+  },
+  {
     version: "2.7.0-dev",
     date: "3 August 2026",
     changes: [

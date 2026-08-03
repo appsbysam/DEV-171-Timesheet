@@ -2752,3 +2752,67 @@ body.staff-modal-open {
     display: none !important;
   }
 }
+
+
+/* =====================================================
+   VERSION 3.0.0 LAUNCH POLISH
+   ===================================================== */
+
+/* Desktop/laptop only: keep the full date comfortable inside the field. */
+@media (min-width: 601px) {
+  .week-card input[type="date"] {
+    font-size: 13px;
+    letter-spacing: -0.15px;
+  }
+}
+
+/*
+  Today button:
+  - Away from current week: vibrant green, active action.
+  - Current week: very light green, inactive state.
+*/
+.week-nav .week-nav-today:not(.is-current):not(:disabled) {
+  border-color: #14963d !important;
+  background:
+    linear-gradient(
+      180deg,
+      #2fc45d 0%,
+      #18a447 100%
+    ) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 4px 10px rgba(24, 164, 71, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  opacity: 1;
+}
+
+.week-nav .week-nav-today:not(.is-current):not(:disabled):hover {
+  border-color: #0d7d31 !important;
+  background:
+    linear-gradient(
+      180deg,
+      #27ba55 0%,
+      #118a39 100%
+    ) !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 6px 14px rgba(24, 164, 71, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.week-nav .week-nav-today.is-current,
+.week-nav .week-nav-today:disabled {
+  border-color: #a8d8b4 !important;
+  background:
+    linear-gradient(
+      180deg,
+      #f3fcf5 0%,
+      #e5f6e9 100%
+    ) !important;
+  color: #17652a !important;
+  box-shadow:
+    0 2px 5px rgba(23, 101, 42, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  cursor: default;
+  opacity: 1;
+}

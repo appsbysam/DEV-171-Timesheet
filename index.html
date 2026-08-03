@@ -41,19 +41,25 @@
   <script src="version.js"></script>
   <script src="release-history.js"></script>
   <script>
+    window.APP_DISPLAY_VERSION =
+      window.APP_VERSION +
+      (window.APP_CONFIG.versionSuffix || "");
+
     document
       .getElementById("appManifest")
       .setAttribute(
         "href",
         window.APP_CONFIG.manifestFile +
           "?v=" +
-          encodeURIComponent(window.APP_VERSION)
+          encodeURIComponent(
+            window.APP_DISPLAY_VERSION
+          )
       );
   </script>
   <script>
     document.write(
       '<link rel="stylesheet" href="styles.css?v=' +
-      encodeURIComponent(window.APP_VERSION) +
+      encodeURIComponent(window.APP_DISPLAY_VERSION) +
       '">'
     );
   </script>
@@ -732,7 +738,7 @@
   <script>
     document.write(
       '<script src="app.js?v=' +
-      encodeURIComponent(window.APP_VERSION) +
+      encodeURIComponent(window.APP_DISPLAY_VERSION) +
       '"><\/script>'
     );
   </script>

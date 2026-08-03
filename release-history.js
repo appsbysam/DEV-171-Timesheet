@@ -1,5 +1,14 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.5.4-dev",
+    date: "3 August 2026",
+    changes: [
+      "Changed the desktop week controls to a compact single-row layout.",
+      "Placed Week Starting, Week Ending, Previous Week and Next Week side by side.",
+      "Kept the existing stacked mobile layout for smaller screens."
+    ]
+  },
+  {
     version: "2.5.3-dev",
     date: "3 August 2026",
     changes: [

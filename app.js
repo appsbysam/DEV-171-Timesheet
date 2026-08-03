@@ -872,7 +872,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.5.3-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.5.4-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 

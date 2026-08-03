@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.0.2",
+    date: "3 August 2026",
+    changes: [
+      "Urgently fixed the current week incorrectly starting on Sunday in positive UTC time zones.",
+      "Enforced Monday as the only valid week-start day and Saturday as the week-ending day.",
+      "Removed timezone-sensitive ISO conversion from current-week, navigation and week-ending calculations.",
+      "Fixed the manager date so it cannot shift back one day."
+    ]
+  },
+  {
     version: "3.0.1",
     date: "3 August 2026",
     changes: [

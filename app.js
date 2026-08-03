@@ -1113,7 +1113,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.0.1"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.0.2"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -1424,11 +1424,36 @@ function updateFinishOptions(
       : "";
 }
 
+function formatLocalDateValue(date) {
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(date.getMonth() + 1)
+      .padStart(2, "0");
+
+  const day =
+    String(date.getDate())
+      .padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 function getCurrentWeekStartValue() {
   const today = new Date();
-  const monday = new Date(today);
-  const currentDay = monday.getDay();
+  const monday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
 
+  const currentDay =
+    monday.getDay();
+
+  /*
+    Monday is always the first operating day.
+    Sunday belongs to the upcoming Monday-to-Saturday week.
+  */
   const daysToMonday =
     currentDay === 0
       ? 1
@@ -1438,9 +1463,9 @@ function getCurrentWeekStartValue() {
     monday.getDate() + daysToMonday
   );
 
-  return monday
-    .toISOString()
-    .slice(0, 10);
+  return formatLocalDateValue(
+    monday
+  );
 }
 
 async function goToCurrentWeek() {
@@ -1943,17 +1968,15 @@ function updateWeekEnd() {
     return;
   }
 
-  const date =
-    new Date(
-      `${weekStart.value}T12:00:00`
-    );
-
-  date.setDate(
-    date.getDate() + 5
-  );
-
+  /*
+    A roster week is always Monday through Saturday.
+    Saturday is exactly five days after Monday.
+  */
   weekEnd.value =
-    date.toISOString().slice(0, 10);
+    addDaysToDateString(
+      weekStart.value,
+      5
+    );
 }
 
 /* =====================================================
@@ -3180,17 +3203,11 @@ function changeWeek(daysToAdd) {
     return;
   }
 
-  const date =
-    new Date(
-      `${weekStart.value}T12:00:00`
-    );
-
-  date.setDate(
-    date.getDate() + daysToAdd
-  );
-
   weekStart.value =
-    date.toISOString().slice(0, 10);
+    addDaysToDateString(
+      weekStart.value,
+      daysToAdd
+    );
 
   updateWeekEnd();
   updateCurrentWeekHighlight();
@@ -3241,9 +3258,9 @@ async function initialiseApp() {
   document.getElementById(
     "managerDate"
   ).value =
-    today
-      .toISOString()
-      .slice(0, 10);
+    formatLocalDateValue(
+      today
+    );
 
   updateWeekEnd();
   setSaveButtonState("saved");

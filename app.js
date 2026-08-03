@@ -74,8 +74,8 @@ const weekStart =
 const weekEnd =
   document.getElementById("weekEnd");
 
-const currentWeekBadge =
-  document.getElementById("currentWeekBadge");
+const goToCurrentWeekBtn =
+  document.getElementById("goToCurrentWeekBtn");
 
 const statusEl =
   document.getElementById("status");
@@ -689,7 +689,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.4.1-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.4.2-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -1019,6 +1019,15 @@ function getCurrentWeekStartValue() {
     .slice(0, 10);
 }
 
+async function goToCurrentWeek() {
+  weekStart.value =
+    getCurrentWeekStartValue();
+
+  updateWeekEnd();
+  updateCurrentWeekHighlight();
+  await load();
+}
+
 function updateCurrentWeekHighlight() {
   const weekCard =
     document.querySelector(".week-card");
@@ -1036,8 +1045,8 @@ function updateCurrentWeekHighlight() {
     isCurrentWeek
   );
 
-  currentWeekBadge.hidden =
-    !isCurrentWeek;
+  goToCurrentWeekBtn.hidden =
+    isCurrentWeek;
 }
 
 /* =====================================================
@@ -2726,6 +2735,11 @@ document
       changeWeek(7);
     }
   );
+
+goToCurrentWeekBtn.addEventListener(
+  "click",
+  goToCurrentWeek
+);
 
 /* =====================================================
    START APPLICATION

@@ -1,5 +1,14 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.4.2-dev",
+    date: "3 August 2026",
+    changes: [
+      "Removed the Current Week badge while viewing the current week.",
+      "Added a Go to Current Week button that appears only when another week is selected.",
+      "The new button returns directly to the current week and reloads its data."
+    ]
+  },
+  {
     version: "2.4.1-dev",
     date: "3 August 2026",
     changes: [

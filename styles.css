@@ -2035,3 +2035,162 @@ body.staff-modal-open {
 .dev-build-banner[hidden] {
   display: none !important;
 }
+
+
+/* =====================================================
+   VERSION HISTORY
+   ===================================================== */
+
+.app-version-button {
+  width: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.app-version-button:hover {
+  color: #444;
+  text-decoration: underline;
+}
+
+.version-history-modal[hidden] {
+  display: none !important;
+}
+
+.version-history-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.version-history-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(2px);
+}
+
+.version-history-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 520px);
+  max-height: min(88vh, 760px);
+  overflow-y: auto;
+  padding: 18px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.3);
+}
+
+.version-history-header {
+  position: sticky;
+  top: -18px;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin: -18px -18px 0;
+  padding: 18px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+}
+
+.version-history-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.version-history-header p {
+  margin: 5px 0 0;
+  color: #666;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.version-history-close {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #eee;
+  color: #222;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.version-history-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.version-history-release {
+  padding: 13px;
+  border: 1px solid #d7d7d7;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.version-history-release.is-current {
+  border-color: #d97706;
+  background: #fff7ed;
+}
+
+.version-history-release-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.version-history-release-heading h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.version-history-release-heading span {
+  color: #777;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.version-history-release ul {
+  margin: 9px 0 0;
+  padding-left: 19px;
+}
+
+.version-history-release li {
+  margin: 5px 0;
+  color: #333;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 460px) {
+  .version-history-modal {
+    align-items: end;
+    padding: 0;
+  }
+
+  .version-history-dialog {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 18px 18px 0 0;
+  }
+}
+
+@media print {
+  .version-history-modal {
+    display: none !important;
+  }
+}

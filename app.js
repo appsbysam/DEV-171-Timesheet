@@ -122,6 +122,18 @@ const staffOperationStatusText =
 const staffToastRegion =
   document.getElementById("staffToastRegion");
 
+const versionHistoryModal =
+  document.getElementById("versionHistoryModal");
+
+const versionHistoryCurrent =
+  document.getElementById("versionHistoryCurrent");
+
+const versionHistoryList =
+  document.getElementById("versionHistoryList");
+
+const closeVersionHistoryBtn =
+  document.getElementById("closeVersionHistoryBtn");
+
 const managerCard =
   document.getElementById("managerCard");
 
@@ -671,14 +683,98 @@ function addModeBadge() {
       "This version saves to the Supabase cloud database.";
   }
 
-  const version = document.createElement("div");
-  version.className = "app-version";
-  version.textContent = `Version ${window.APP_VERSION || "2.3.1-dev"}`;
+  const version = document.createElement("button");
+  version.className = "app-version app-version-button";
+  version.type = "button";
+  version.textContent = `Version ${window.APP_VERSION || "2.4.0-dev"}`;
+  version.title = "View version history";
+  version.setAttribute("aria-label", "View version history");
+
+  version.addEventListener("click", openVersionHistory);
 
   wrapper.appendChild(badge);
   wrapper.appendChild(version);
 
   header.appendChild(wrapper);
+}
+
+
+function renderVersionHistory() {
+  const history =
+    Array.isArray(window.RELEASE_HISTORY)
+      ? window.RELEASE_HISTORY
+      : [];
+
+  versionHistoryCurrent.textContent =
+    `Current version: ${window.APP_VERSION}`;
+
+  versionHistoryList.innerHTML = "";
+
+  history.forEach((release, index) => {
+    const section =
+      document.createElement("section");
+
+    section.className =
+      "version-history-release";
+
+    if (index === 0) {
+      section.classList.add("is-current");
+    }
+
+    const heading =
+      document.createElement("div");
+
+    heading.className =
+      "version-history-release-heading";
+
+    const title =
+      document.createElement("h3");
+
+    title.textContent =
+      `Version ${release.version}`;
+
+    const date =
+      document.createElement("span");
+
+    date.textContent =
+      release.date || "";
+
+    heading.appendChild(title);
+    heading.appendChild(date);
+
+    const list =
+      document.createElement("ul");
+
+    (release.changes || []).forEach((change) => {
+      const item =
+        document.createElement("li");
+
+      item.textContent = change;
+      list.appendChild(item);
+    });
+
+    section.appendChild(heading);
+    section.appendChild(list);
+    versionHistoryList.appendChild(section);
+  });
+}
+
+function openVersionHistory() {
+  renderVersionHistory();
+  versionHistoryModal.hidden = false;
+  document.body.classList.add("staff-modal-open");
+}
+
+function closeVersionHistory() {
+  versionHistoryModal.hidden = true;
+
+  if (
+    staffModal.hidden &&
+    managerLoginModal.hidden &&
+    managerMenuModal.hidden
+  ) {
+    document.body.classList.remove("staff-modal-open");
+  }
 }
 
 /* =====================================================
@@ -2291,6 +2387,11 @@ document.addEventListener("keydown", (event) => {
 
   if (!managerMenuModal.hidden) {
     closeManagerMenu();
+    return;
+  }
+
+  if (!versionHistoryModal.hidden) {
+    closeVersionHistory();
   }
 });
 
@@ -2540,5 +2641,20 @@ if (!LOCAL_MODE) {
     applyManagerControlState();
   });
 }
+
+
+closeVersionHistoryBtn.addEventListener(
+  "click",
+  closeVersionHistory
+);
+
+versionHistoryModal
+  .querySelectorAll("[data-close-version-history]")
+  .forEach((element) => {
+    element.addEventListener(
+      "click",
+      closeVersionHistory
+    );
+  });
 
 initialiseApp();

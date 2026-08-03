@@ -620,8 +620,8 @@ function addModeBadge() {
   badge.id = "storageModeBadge";
 
   badge.textContent = LOCAL_MODE
-    ? "● LOCAL MODE"
-    : "● ONLINE MODE";
+    ? "● LOCAL MODE • DEV"
+    : "● ONLINE MODE • DEV";
 
   badge.style.display = "inline-block";
   badge.style.marginTop = "6px";
@@ -647,7 +647,7 @@ function addModeBadge() {
 
   const version = document.createElement("div");
   version.className = "app-version";
-  version.textContent = `Version ${window.APP_VERSION || "2.2.4"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.3.0-dev"}`;
 
   wrapper.appendChild(badge);
   wrapper.appendChild(version);

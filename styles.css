@@ -2564,3 +2564,61 @@ body.staff-modal-open {
     flex-basis: 15px;
   }
 }
+
+
+/* =====================================================
+   DESKTOP DATE FIT + TODAY STATES — v2.6.1-dev
+   ===================================================== */
+
+/* Desktop/laptop only: reduce the date text slightly so it fits cleanly. */
+@media (min-width: 601px) {
+  .week-card input[type="date"] {
+    font-size: 13px;
+    letter-spacing: -0.15px;
+  }
+}
+
+/* Away from current week: Today is the strong primary action. */
+.week-nav .week-nav-today:not(.is-current):not(:disabled) {
+  border-color: #14963d !important;
+  background:
+    linear-gradient(
+      180deg,
+      #2fc45d 0%,
+      #18a447 100%
+    ) !important;
+  color: #fff !important;
+  box-shadow:
+    0 4px 10px rgba(24, 164, 71, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.week-nav .week-nav-today:not(.is-current):not(:disabled):hover {
+  border-color: #0d7d31 !important;
+  background:
+    linear-gradient(
+      180deg,
+      #25b953 0%,
+      #118a39 100%
+    ) !important;
+  box-shadow:
+    0 6px 14px rgba(24, 164, 71, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+/* Current week: visible but deliberately softer. */
+.week-nav .week-nav-today.is-current,
+.week-nav .week-nav-today:disabled {
+  border-color: #9fd5ae !important;
+  background:
+    linear-gradient(
+      180deg,
+      #eaf9ee 0%,
+      #d5f0dc 100%
+    ) !important;
+  color: #17652a !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  cursor: default;
+  opacity: 1;
+}

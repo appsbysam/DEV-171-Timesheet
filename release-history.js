@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.6.1-dev",
+    date: "3 August 2026",
+    changes: [
+      "Reduced the desktop date-field font slightly so full dates fit cleanly.",
+      "Made Today vibrant green when another week is selected.",
+      "Changed Today to a softer light green while already viewing the current week.",
+      "Kept the existing mobile date-field sizing unchanged."
+    ]
+  },
+  {
     version: "2.6.0-dev",
     date: "3 August 2026",
     changes: [

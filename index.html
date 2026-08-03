@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <meta name="theme-color" content="#111111" />
+
+  <title>Café Staff Timesheet</title>
+
+  <link rel="manifest" href="manifest.json" />
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="32x32"
+    href="favicon.png"
+  />
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="192x192"
+    href="icon-192.png"
+  />
+
+  <link
+    rel="icon"
+    type="image/png"
+    sizes="512x512"
+    href="icon-512.png"
+  />
+
+  <link
+    rel="apple-touch-icon"
+    sizes="180x180"
+    href="apple-touch-icon.png"
+  />
+  <script src="version.js"></script>
+  <script>
+    document.write(
+      '<link rel="stylesheet" href="styles.css?v=' +
+      encodeURIComponent(window.APP_VERSION) +
+      '">'
+    );
+  </script>
+</head>
+
+<body>
+  <main class="app-shell">
+
+    <header class="brand-header">
+
+      <img
+        src="171_Logo_Timesheets.png"
+        alt="171 On Pitt Staff Timesheet"
+        class="brand-logo"
+      />
+
+      <div class="brand-copy">
+        <p class="brand-title">Staff Timesheet</p>
+      </div>
+
+    </header>
+
+    <section class="week-card">
+
+      <div class="week-fields">
+
+        <label>
+          Week starting
+
+          <input
+            id="weekStart"
+            type="date"
+          />
+        </label>
+
+        <label>
+          Week ending
+
+          <input
+            id="weekEnd"
+            type="date"
+            readonly
+          />
+        </label>
+
+      </div>
+
+      <div class="week-nav no-print">
+
+        <button
+          type="button"
+          id="previousWeekBtn"
+        >
+          ← Previous Week
+        </button>
+
+        <button
+          type="button"
+          id="nextWeekBtn"
+        >
+          Next Week →
+        </button>
+
+      </div>
+
+    </section>
+
+    <section class="toolbar no-print">
+
+      <button
+        id="saveBtn"
+        class="save-btn is-saved"
+        type="button"
+      >
+        ✓ Saved
+      </button>
+
+      <button
+        id="printBtn"
+        type="button"
+      >
+        Print/PDF
+      </button>
+
+      <button
+        id="resetBtn"
+        class="clear-btn"
+        type="button"
+        disabled
+      >
+        Clear
+      </button>
+
+      <button
+        id="manageStaffBtn"
+        class="manage-staff-btn"
+        type="button"
+      >
+        👥 Manage Staff
+      </button>
+
+    </section>
+
+    <div
+      id="statusIndicator"
+      class="status-indicator status-saved no-print"
+      aria-live="polite"
+    >
+      <span class="status-dot"></span>
+      <span id="status"></span>
+    </div>
+<section
+      id="timesheet"
+      class="timesheet"
+    ></section>
+
+    <section class="summary-card">
+
+      <div id="employeeTotals"></div>
+
+      <div class="grand">
+        <span>Week total</span>
+        <strong id="weekTotal">0.00</strong>
+      </div>
+
+    </section>
+
+    <section id="managerCard" class="manager-card" hidden>
+
+      <label>
+        Manager notes
+
+        <textarea
+          id="managerNotes"
+          rows="3"
+        ></textarea>
+      </label>
+
+      <div class="manager-grid">
+
+        <label>
+          Manager
+
+          <input
+            id="managerName"
+            type="text"
+          />
+        </label>
+
+        <label>
+          Date
+
+          <input
+            id="managerDate"
+            type="date"
+          />
+        </label>
+
+      </div>
+
+    </section>
+
+
+
+
+    <div
+      id="managerMenuModal"
+      class="manager-menu-modal no-print"
+      hidden
+    >
+      <div
+        class="manager-menu-backdrop"
+        data-close-manager-menu
+      ></div>
+
+      <section
+        class="manager-menu-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="managerMenuTitle"
+      >
+        <div class="manager-menu-header">
+          <div>
+            <h2 id="managerMenuTitle">Manager Mode</h2>
+            <p>Choose an administrative action.</p>
+          </div>
+
+          <button
+            id="closeManagerMenuBtn"
+            class="manager-menu-close"
+            type="button"
+            aria-label="Close manager menu"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="manager-menu-actions">
+          <button id="managerMenuStaffBtn" type="button">
+            👥 Manage Staff
+          </button>
+
+          <button
+            id="managerMenuClearBtn"
+            class="manager-menu-clear"
+            type="button"
+          >
+            Clear Week
+          </button>
+
+          <button
+            id="managerMenuSignOutBtn"
+            class="manager-menu-sign-out"
+            type="button"
+          >
+            Sign Out
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <div
+      id="managerLoginModal"
+      class="manager-login-modal no-print"
+      hidden
+    >
+      <div
+        class="manager-login-backdrop"
+        data-close-manager-login
+      ></div>
+
+      <section
+        class="manager-login-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="managerLoginTitle"
+      >
+        <div class="manager-login-header">
+          <div>
+            <h2 id="managerLoginTitle">Manager Sign In</h2>
+            <p>Sign in to manage staff members.</p>
+          </div>
+
+          <button
+            id="closeManagerLoginBtn"
+            class="manager-login-close"
+            type="button"
+            aria-label="Close manager sign in"
+          >
+            ×
+          </button>
+        </div>
+
+        <form id="managerLoginForm" class="manager-login-form">
+          <label for="managerLoginEmail">Email</label>
+          <input
+            id="managerLoginEmail"
+            type="email"
+            autocomplete="username"
+            required
+          />
+
+          <label for="managerLoginPassword">Password</label>
+          <input
+            id="managerLoginPassword"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+
+          <button id="managerLoginSubmitBtn" type="submit">Sign In</button>
+        </form>
+
+        <p
+          id="managerLoginMessage"
+          class="manager-login-message"
+          aria-live="polite"
+        ></p>
+      </section>
+    </div>
+
+    <div
+      id="staffModal"
+      class="staff-modal no-print"
+      hidden
+    >
+      <div
+        class="staff-modal-backdrop"
+        data-close-staff-modal
+      ></div>
+
+      <section
+        class="staff-modal-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="staffModalTitle"
+      >
+        <div class="staff-modal-header">
+          <div>
+            <h2 id="staffModalTitle">Manage Staff</h2>
+            <p>Add, rename, deactivate or reactivate staff.</p>
+          </div>
+
+          <div class="staff-modal-header-actions">
+            <button
+              id="managerSignOutBtn"
+              class="manager-sign-out-btn"
+              type="button"
+            >
+              Sign Out
+            </button>
+
+            <button
+              id="closeStaffModalBtn"
+              class="staff-modal-close"
+              type="button"
+              aria-label="Close staff management"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="staffOperationStatus"
+          class="staff-operation-status is-ready"
+          role="status"
+          aria-live="polite"
+        >
+          <span class="staff-operation-icon" aria-hidden="true">✓</span>
+          <span id="staffOperationStatusText">Ready</span>
+        </div>
+
+        <div
+          id="staffToastRegion"
+          class="staff-toast-region"
+          aria-live="polite"
+          aria-atomic="true"
+        ></div>
+
+        <form id="addStaffForm" class="add-staff-form">
+          <label for="newStaffName">New staff member</label>
+
+          <div class="add-staff-row">
+            <input
+              id="newStaffName"
+              type="text"
+              maxlength="80"
+              autocomplete="off"
+              placeholder="Enter staff name"
+              required
+            />
+
+            <button type="submit">Add Staff</button>
+          </div>
+        </form>
+
+        <p
+          id="staffManagerMessage"
+          class="staff-manager-message"
+          aria-live="polite"
+        ></p>
+
+        <div class="staff-list-section">
+          <h3>Active staff</h3>
+          <div id="activeStaffList" class="staff-list"></div>
+        </div>
+
+        <details class="inactive-staff-section">
+          <summary>
+            Inactive staff
+            <span id="inactiveStaffCount">0</span>
+          </summary>
+
+          <div id="inactiveStaffList" class="staff-list"></div>
+        </details>
+      </section>
+    </div>
+
+  </main>
+
+  <template id="dayTemplate">
+
+    <article class="day-block">
+
+      <h2></h2>
+
+      <div class="column-headings">
+        <span>Name</span>
+        <span>Start</span>
+        <span>Finish</span>
+        <span>Total</span>
+      </div>
+
+      <div class="employeeRows"></div>
+
+    </article>
+
+  </template>
+
+  <template id="employeeRowTemplate">
+
+    <div class="shift-row">
+
+      <div class="shift-line shift-line-primary">
+        <div class="employee-action-cell">
+          <strong class="employee-name"></strong>
+
+          <button
+            type="button"
+            class="add-split-shift-btn no-print"
+          >
+            + Split Shift
+          </button>
+        </div>
+
+        <select
+          class="start"
+          aria-label="Start time"
+        ></select>
+
+        <select
+          class="finish"
+          aria-label="Finish time"
+        ></select>
+
+        <output class="shift-total primary-shift-total">
+          0.00
+        </output>
+      </div>
+
+      <div class="split-shift-panel shift-line" hidden>
+        <div class="employee-action-cell split-action-cell">
+          <span class="split-shift-label">Shift 2</span>
+
+          <button
+            type="button"
+            class="remove-split-shift-btn no-print"
+          >
+            Remove Split Shift
+          </button>
+        </div>
+
+        <select
+          class="split-start"
+          aria-label="Split shift start time"
+        ></select>
+
+        <select
+          class="split-finish"
+          aria-label="Split shift finish time"
+        ></select>
+
+        <output class="shift-total split-shift-total">
+          0.00
+        </output>
+      </div>
+
+      <div class="row-total-wrap" hidden>
+        <span class="row-total-label">Total</span>
+
+        <output class="row-total">
+          0.00
+        </output>
+      </div>
+
+    </div>
+
+  </template>
+
+  <template id="employeeTotalTemplate">
+
+    <div class="employee-total-row">
+      <span class="employee-total-name"></span>
+      <strong class="employee-total-value">0.00</strong>
+    </div>
+
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    document.write(
+      '<script src="app.js?v=' +
+      encodeURIComponent(window.APP_VERSION) +
+      '"><\/script>'
+    );
+  </script>
+</body>
+</html>

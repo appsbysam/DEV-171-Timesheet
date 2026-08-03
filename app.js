@@ -536,11 +536,22 @@ function addDaysToDateString(
   dateString,
   numberOfDays
 ) {
-  const date =
-    new Date(`${dateString}T00:00:00`);
+  const [year, month, day] =
+    dateString
+      .split("-")
+      .map(Number);
 
-  date.setDate(
-    date.getDate() + numberOfDays
+  const date =
+    new Date(
+      Date.UTC(
+        year,
+        month - 1,
+        day
+      )
+    );
+
+  date.setUTCDate(
+    date.getUTCDate() + numberOfDays
   );
 
   return date
@@ -627,26 +638,13 @@ async function copyPreviousWeek() {
       "loading"
     );
 
-    const sourceCandidates = [
-      sourceWeek,
-      addDaysToDateString(sourceWeek, -1)
-    ];
+    const matchedSourceWeek =
+      sourceWeek;
 
-    let previousRows = [];
-    let matchedSourceWeek = "";
-
-    for (const candidateWeek of sourceCandidates) {
-      previousRows =
-        await TimesheetStorage.load(
-          candidateWeek
-        );
-
-      if (previousRows.length) {
-        matchedSourceWeek =
-          candidateWeek;
-        break;
-      }
-    }
+    const previousRows =
+      await TimesheetStorage.load(
+        matchedSourceWeek
+      );
 
     if (!previousRows.length) {
       const environmentName =
@@ -874,7 +872,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.5.2-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.5.3-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 

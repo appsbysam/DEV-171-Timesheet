@@ -1,5 +1,14 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.5.3-dev",
+    date: "3 August 2026",
+    changes: [
+      "Fixed Copy Previous Week calculating 27 July as 26 July in positive UTC time zones.",
+      "Changed week-date arithmetic to use UTC-safe date handling.",
+      "Copy Previous Week now searches exactly seven days before the currently selected Week Starting date."
+    ]
+  },
+  {
     version: "2.5.2-dev",
     date: "3 August 2026",
     changes: [

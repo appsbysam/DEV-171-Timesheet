@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.4.1-dev",
+    date: "3 August 2026",
+    changes: [
+      "Moved the DEV BUILD badge beside the ONLINE MODE badge.",
+      "Added a green highlight and Current Week badge for the active current week.",
+      "Made Finish dropdowns automatically begin 30 minutes after the selected Start time.",
+      "Applied the same dynamic time filtering to split shifts.",
+      "Prevented shifts shorter than 30 minutes."
+    ]
+  },
+  {
     version: "2.4.0-dev",
     date: "3 August 2026",
     changes: [

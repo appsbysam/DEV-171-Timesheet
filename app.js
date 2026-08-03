@@ -74,6 +74,9 @@ const weekStart =
 const weekEnd =
   document.getElementById("weekEnd");
 
+const currentWeekBadge =
+  document.getElementById("currentWeekBadge");
+
 const statusEl =
   document.getElementById("status");
 
@@ -686,13 +689,31 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.4.0-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.4.1-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
   version.addEventListener("click", openVersionHistory);
 
-  wrapper.appendChild(badge);
+  const badgeRow =
+    document.createElement("div");
+
+  badgeRow.className =
+    "header-badge-row";
+
+  if (
+    devBuildBanner &&
+    window.APP_CONFIG.isDevelopment
+  ) {
+    devBuildBanner.hidden = false;
+    badgeRow.appendChild(
+      devBuildBanner
+    );
+  }
+
+  badgeRow.appendChild(badge);
+
+  wrapper.appendChild(badgeRow);
   wrapper.appendChild(version);
 
   header.appendChild(wrapper);
@@ -941,6 +962,84 @@ function populateSelect(
   });
 }
 
+function updateFinishOptions(
+  startSelect,
+  finishSelect,
+  day,
+  preferredValue = finishSelect.value
+) {
+  const startMinutes =
+    minutes(startSelect.value);
+
+  const allFinishOptions =
+    getTimeOptions(day, "finish");
+
+  const availableOptions =
+    startMinutes === null
+      ? allFinishOptions
+      : allFinishOptions.filter(
+          (option) =>
+            minutes(option.value) >=
+            startMinutes + 30
+        );
+
+  populateSelect(
+    finishSelect,
+    availableOptions
+  );
+
+  const preferredStillAvailable =
+    [...finishSelect.options].some(
+      (option) =>
+        option.value === preferredValue
+    );
+
+  finishSelect.value =
+    preferredStillAvailable
+      ? preferredValue
+      : "";
+}
+
+function getCurrentWeekStartValue() {
+  const today = new Date();
+  const monday = new Date(today);
+  const currentDay = monday.getDay();
+
+  const daysToMonday =
+    currentDay === 0
+      ? 1
+      : 1 - currentDay;
+
+  monday.setDate(
+    monday.getDate() + daysToMonday
+  );
+
+  return monday
+    .toISOString()
+    .slice(0, 10);
+}
+
+function updateCurrentWeekHighlight() {
+  const weekCard =
+    document.querySelector(".week-card");
+
+  if (!weekCard || !weekStart.value) {
+    return;
+  }
+
+  const isCurrentWeek =
+    weekStart.value ===
+    getCurrentWeekStartValue();
+
+  weekCard.classList.toggle(
+    "is-current-week",
+    isCurrentWeek
+  );
+
+  currentWeekBadge.hidden =
+    !isCurrentWeek;
+}
+
 /* =====================================================
    DYNAMIC TIMESHEET BUILDING
    ===================================================== */
@@ -1000,6 +1099,7 @@ function createEmployeeRow(
 
   row.dataset.employee = member.name;
   row.dataset.employeeId = member.id;
+  row.dataset.day = day;
 
   nameElement.textContent = member.name;
 
@@ -1037,19 +1137,46 @@ function createEmployeeRow(
     `${day} ${member.name} split shift finish`
   );
 
-  row
-    .querySelectorAll("select")
-    .forEach((select) => {
-      select.addEventListener(
-        "change",
-        () => {
-          calculateRow(row);
-          calculateTotals();
-          updateClearButtonState();
-          scheduleSave();
-        }
+  const handleShiftChange = () => {
+    calculateRow(row);
+    calculateTotals();
+    updateClearButtonState();
+    scheduleSave();
+  };
+
+  start.addEventListener(
+    "change",
+    () => {
+      updateFinishOptions(
+        start,
+        finish,
+        day
       );
-    });
+      handleShiftChange();
+    }
+  );
+
+  finish.addEventListener(
+    "change",
+    handleShiftChange
+  );
+
+  splitStart.addEventListener(
+    "change",
+    () => {
+      updateFinishOptions(
+        splitStart,
+        splitFinish,
+        day
+      );
+      handleShiftChange();
+    }
+  );
+
+  splitFinish.addEventListener(
+    "change",
+    handleShiftChange
+  );
 
   addSplitButton.addEventListener("click", () => {
     setSplitShiftVisible(row, true);
@@ -1219,7 +1346,7 @@ function calculateShiftMinutes(startSelect, finishSelect) {
 
   const total = finish - start;
 
-  if (total < 0 || total > 630) {
+  if (total < 30 || total > 630) {
     startSelect.classList.add("invalid");
     finishSelect.classList.add("invalid");
 
@@ -1671,15 +1798,21 @@ function applyTimesheetData(data) {
       return;
     }
 
-    row.querySelector(
-      ".start"
-    ).value =
+    const primaryStart =
+      row.querySelector(".start");
+
+    const primaryFinish =
+      row.querySelector(".finish");
+
+    primaryStart.value =
       record.start_time || "";
 
-    row.querySelector(
-      ".finish"
-    ).value =
-      record.finish_time || "";
+    updateFinishOptions(
+      primaryStart,
+      primaryFinish,
+      record.day,
+      record.finish_time || ""
+    );
 
     const splitKey =
       `${record.day}::${record.employee}`;
@@ -1690,15 +1823,21 @@ function applyTimesheetData(data) {
     if (splitShift) {
       setSplitShiftVisible(row, true);
 
-      row.querySelector(
-        ".split-start"
-      ).value =
+      const secondaryStart =
+        row.querySelector(".split-start");
+
+      const secondaryFinish =
+        row.querySelector(".split-finish");
+
+      secondaryStart.value =
         splitShift.start || "";
 
-      row.querySelector(
-        ".split-finish"
-      ).value =
-        splitShift.finish || "";
+      updateFinishOptions(
+        secondaryStart,
+        secondaryFinish,
+        record.day,
+        splitShift.finish || ""
+      );
     } else {
       setSplitShiftVisible(
         row,
@@ -2431,6 +2570,7 @@ weekStart.addEventListener(
   "change",
   async () => {
     updateWeekEnd();
+    updateCurrentWeekHighlight();
     await load();
   }
 );
@@ -2561,6 +2701,7 @@ function changeWeek(daysToAdd) {
     date.toISOString().slice(0, 10);
 
   updateWeekEnd();
+  updateCurrentWeekHighlight();
   load();
 }
 
@@ -2593,32 +2734,10 @@ document
 async function initialiseApp() {
   addModeBadge();
 
-  const today = new Date();
-
-  const monday =
-    new Date(today);
-
-  const currentDay =
-    monday.getDay();
-
-  /*
-    The app uses a Sunday-to-Saturday week.
-    Sunday points forward to the Monday within that week.
-    Monday through Saturday point back to that week's Monday.
-  */
-  const daysToMonday =
-    currentDay === 0
-      ? 1
-      : 1 - currentDay;
-
-  monday.setDate(
-    monday.getDate() + daysToMonday
-  );
-
   weekStart.value =
-    monday
-      .toISOString()
-      .slice(0, 10);
+    getCurrentWeekStartValue();
+
+  updateCurrentWeekHighlight();
 
   document.getElementById(
     "managerDate"

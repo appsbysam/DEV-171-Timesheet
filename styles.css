@@ -2194,3 +2194,86 @@ body.staff-modal-open {
     display: none !important;
   }
 }
+
+
+/* =====================================================
+   HEADER BADGE ALIGNMENT — v2.4.1-dev
+   ===================================================== */
+
+.header-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.header-badge-row .dev-build-banner {
+  align-self: auto;
+  margin: 0;
+}
+
+.header-badge-row #storageModeBadge {
+  margin: 0 !important;
+}
+
+/* =====================================================
+   CURRENT WEEK HIGHLIGHT — v2.4.1-dev
+   ===================================================== */
+
+.week-card.is-current-week {
+  background: #25a64a;
+  border-color: #1a8b3b;
+}
+
+.week-card.is-current-week label {
+  color: #111;
+}
+
+.current-week-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  background: #fff;
+  color: #167136;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.current-week-badge[hidden] {
+  display: none !important;
+}
+
+.week-card.is-current-week .week-nav {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 460px) {
+  .header-badge-row {
+    gap: 4px;
+  }
+
+  .header-badge-row .dev-build-banner,
+  .header-badge-row #storageModeBadge {
+    font-size: 8px !important;
+    padding: 4px 7px !important;
+  }
+
+  .current-week-badge {
+    min-height: 27px;
+    padding: 4px 8px;
+    font-size: 8px;
+  }
+}
+
+@media print {
+  .current-week-badge {
+    display: none !important;
+  }
+}

@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.0.5",
+    date: "3 August 2026",
+    changes: [
+      "Fixed Previous and Next changing width when Today is hidden.",
+      "Reserved the middle navigation slot on the current week.",
+      "Kept navigation button dimensions fixed on both desktop and mobile.",
+      "Today remains visually hidden on the current week."
+    ]
+  },
+  {
     version: "3.0.4",
     date: "3 August 2026",
     changes: [

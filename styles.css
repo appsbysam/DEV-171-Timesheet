@@ -2394,3 +2394,28 @@ body.staff-modal-open {
     min-width: 160px !important;
   }
 }
+
+
+/* v2.5.5 - fit Current Week button on one row */
+@media (min-width:601px){
+  .week-card{
+    grid-template-columns:1.2fr 1fr;
+    gap:12px;
+  }
+  .week-nav{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+  }
+  .week-nav button,
+  .go-to-current-week-btn{
+    min-width:0!important;
+    width:100%;
+    min-height:42px;
+    padding:6px 8px;
+    font-size:11px;
+    line-height:1.1;
+  }
+  .go-to-current-week-btn{
+    grid-column:auto;
+  }
+}

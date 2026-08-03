@@ -1,4 +1,6 @@
 window.RELEASE_HISTORY = [
+  {version:"2.5.5-dev",date:"3 August 2026",changes:["Reduced navigation button widths so Previous, Next and Current Week always fit on one desktop row."]},
+
   {
     version: "2.5.4-dev",
     date: "3 August 2026",

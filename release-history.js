@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.0.4",
+    date: "3 August 2026",
+    changes: [
+      "Replaced the cache-dependent version checker with persistent last-used-version tracking.",
+      "The app now reliably detects future version changes on each browser.",
+      "First visits store the current version silently.",
+      "DEV and production keep separate stored version records.",
+      "A reload guard prevents repeated update loops."
+    ]
+  },
+  {
     version: "3.0.3",
     date: "3 August 2026",
     changes: [

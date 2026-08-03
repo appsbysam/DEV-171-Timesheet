@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.0.7",
+    date: "4 August 2026",
+    changes: [
+      "Replaced the brief forced update notice with a prompted Update Available dialog.",
+      "Added Update Now and Later choices.",
+      "Added Save & Update protection when unsaved changes exist.",
+      "Added automatic update checks every 10 minutes while the app remains open.",
+      "Continued using docs/CHANGELOG.md as the single master changelog."
+    ]
+  },
+  {
     version: "3.0.6",
     date: "4 August 2026",
     changes: [

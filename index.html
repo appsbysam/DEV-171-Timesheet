@@ -38,7 +38,13 @@
     href="apple-touch-icon.png"
   />
   <script src="config.js"></script>
-  <script src="version.js"></script>
+  <script>
+    document.write(
+      '<script src="version.js?startup-check=' +
+      Date.now() +
+      '"><\/script>'
+    );
+  </script>
   <script src="release-history.js"></script>
   <script>
     window.APP_DISPLAY_VERSION =
@@ -65,154 +71,71 @@
   </script>
   <script>
     /*
-      Persistent version tracking:
-      - First visit: stores the current deployed version silently.
-      - Future version change: shows a short notice and reloads once.
-      - The stored version is kept separately for DEV and production.
+      Reliable update detection using a freshly loaded version.js.
     */
     (function () {
       const environmentName =
-        window.APP_CONFIG.environment ||
-        "production";
+        window.APP_CONFIG.environment || "production";
 
       const versionStorageKey =
-        "171-timesheet-last-version-" +
-        environmentName;
+        "171-timesheet-last-version-" + environmentName;
 
       const refreshGuardKey =
-        "171-timesheet-refreshing-" +
-        environmentName;
+        "171-timesheet-refreshing-" + environmentName;
 
       function showVersionUpdateNotice() {
-        if (
-          document.querySelector(
-            ".version-update-notice"
-          )
-        ) {
+        if (document.querySelector(".version-update-notice")) {
           return;
         }
 
-        const notice =
-          document.createElement("div");
-
-        notice.className =
-          "version-update-notice";
-
-        notice.setAttribute(
-          "role",
-          "status"
-        );
-
-        notice.setAttribute(
-          "aria-live",
-          "assertive"
-        );
-
+        const notice = document.createElement("div");
+        notice.className = "version-update-notice";
+        notice.setAttribute("role", "status");
+        notice.setAttribute("aria-live", "assertive");
         notice.innerHTML = `
           <div class="version-update-spinner"></div>
-          <span>
-            A new version is available. Loading now…
-          </span>
+          <span>A new version is available. Loading now…</span>
         `;
-
         document.body.appendChild(notice);
       }
 
-      function completeVersionCheck() {
-        const currentVersion =
-          window.APP_VERSION;
+      function checkVersion() {
+        const deployedVersion = window.APP_VERSION;
+        if (!deployedVersion) return;
 
         const lastUsedVersion =
-          localStorage.getItem(
-            versionStorageKey
-          );
+          localStorage.getItem(versionStorageKey);
 
-        /*
-          First visit on this browser/environment:
-          remember the version without showing a popup.
-        */
         if (!lastUsedVersion) {
-          localStorage.setItem(
-            versionStorageKey,
-            currentVersion
-          );
-
-          sessionStorage.removeItem(
-            refreshGuardKey
-          );
-
+          localStorage.setItem(versionStorageKey, deployedVersion);
+          sessionStorage.removeItem(refreshGuardKey);
           return;
         }
 
-        /*
-          Same version as last time:
-          clear any temporary reload guard.
-        */
-        if (
-          lastUsedVersion ===
-          currentVersion
-        ) {
-          sessionStorage.removeItem(
-            refreshGuardKey
-          );
-
+        if (lastUsedVersion === deployedVersion) {
+          sessionStorage.removeItem(refreshGuardKey);
           return;
         }
 
         const guardedVersion =
-          sessionStorage.getItem(
-            refreshGuardKey
-          );
-
-        /*
-          Remember the new version before reloading.
-          This prevents an endless update loop.
-        */
-        localStorage.setItem(
-          versionStorageKey,
-          currentVersion
-        );
+          sessionStorage.getItem(refreshGuardKey);
 
         showVersionUpdateNotice();
+        localStorage.setItem(versionStorageKey, deployedVersion);
 
-        if (
-          guardedVersion ===
-          currentVersion
-        ) {
-          return;
-        }
+        if (guardedVersion === deployedVersion) return;
 
-        sessionStorage.setItem(
-          refreshGuardKey,
-          currentVersion
-        );
+        sessionStorage.setItem(refreshGuardKey, deployedVersion);
 
         window.setTimeout(() => {
-          const url =
-            new URL(
-              window.location.href
-            );
-
-          url.searchParams.set(
-            "app-version",
-            currentVersion
-          );
-
-          url.searchParams.set(
-            "refresh",
-            Date.now()
-          );
-
-          window.location.replace(
-            url.toString()
-          );
-        }, 1100);
+          const url = new URL(window.location.href);
+          url.searchParams.set("app-version", deployedVersion);
+          url.searchParams.set("refresh", Date.now());
+          window.location.replace(url.toString());
+        }, 1200);
       }
 
-      window.addEventListener(
-        "DOMContentLoaded",
-        completeVersionCheck
-      );
+      window.addEventListener("DOMContentLoaded", checkVersion);
     })();
   </script>
 </head>

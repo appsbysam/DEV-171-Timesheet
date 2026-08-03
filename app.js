@@ -152,6 +152,9 @@ const managerMenuStaffBtn =
 const managerMenuClearBtn =
   document.getElementById("managerMenuClearBtn");
 
+const managerMenuCopyPreviousBtn =
+  document.getElementById("managerMenuCopyPreviousBtn");
+
 const managerMenuSignOutBtn =
   document.getElementById("managerMenuSignOutBtn");
 
@@ -522,6 +525,160 @@ const StaffStorage = {
   }
 };
 
+function addDaysToDateString(
+  dateString,
+  numberOfDays
+) {
+  const date =
+    new Date(`${dateString}T00:00:00`);
+
+  date.setDate(
+    date.getDate() + numberOfDays
+  );
+
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+
+function preparePreviousWeekRows(
+  previousRows,
+  destinationWeek
+) {
+  let previousMetadata = {};
+
+  try {
+    previousMetadata =
+      JSON.parse(
+        previousRows[0]?.notes || "{}"
+      );
+  } catch (error) {
+    console.warn(
+      "Unable to read previous-week metadata:",
+      error
+    );
+  }
+
+  const copiedMetadata =
+    JSON.stringify({
+      managerNotes: "",
+      managerName: "",
+      managerDate: "",
+      splitShifts:
+        previousMetadata.splitShifts || {}
+    });
+
+  return previousRows.map((row) => ({
+    week_start: destinationWeek,
+    employee: row.employee,
+    day: row.day,
+    start_time: row.start_time || null,
+    finish_time: row.finish_time || null,
+    hours: Number(row.hours || 0),
+    notes: copiedMetadata
+  }));
+}
+
+async function copyPreviousWeek() {
+  const destinationWeek =
+    weekStart.value;
+
+  if (!destinationWeek) {
+    return;
+  }
+
+  const sourceWeek =
+    addDaysToDateString(
+      destinationWeek,
+      -7
+    );
+
+  if (formHasClearableData()) {
+    const confirmed =
+      await showConfirmDialog({
+        title: "Warning",
+        message:
+          "There are values entered for the current week. This will override those values. Are you sure you want to continue?",
+        confirmText: "Continue"
+      });
+
+    if (!confirmed) {
+      return;
+    }
+  }
+
+  try {
+    closeManagerMenu();
+
+    setSaveButtonState("saving");
+
+    setStatus(
+      LOCAL_MODE
+        ? "Copying previous local week…"
+        : "Copying previous cloud week…",
+      false,
+      "loading"
+    );
+
+    const previousRows =
+      await TimesheetStorage.load(
+        sourceWeek
+      );
+
+    if (!previousRows.length) {
+      setSaveButtonState("saved");
+
+      setStatus(
+        "No entries found in the previous week",
+        false,
+        "saved"
+      );
+
+      return;
+    }
+
+    const copiedRows =
+      preparePreviousWeekRows(
+        previousRows,
+        destinationWeek
+      );
+
+    isLoading = true;
+
+    clearForm();
+    applyTimesheetData(copiedRows);
+
+    await TimesheetStorage.save(
+      destinationWeek,
+      copiedRows
+    );
+
+    setSaveButtonState("saved");
+
+    setStatus(
+      LOCAL_MODE
+        ? "Previous week copied locally"
+        : "Previous week copied to current week",
+      false,
+      "saved"
+    );
+
+    updateClearButtonState();
+  } catch (error) {
+    console.error(error);
+
+    setSaveButtonState("error");
+
+    setStatus(
+      `Unable to copy previous week: ${error.message}`,
+      true,
+      "error"
+    );
+  } finally {
+    isLoading = false;
+  }
+}
+
 /* =====================================================
    MANAGER CONTROLS
    ===================================================== */
@@ -689,7 +846,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_VERSION || "2.4.2-dev"}`;
+  version.textContent = `Version ${window.APP_VERSION || "2.5.0-dev"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -2392,6 +2549,11 @@ managerMenuStaffBtn.addEventListener("click", async () => {
   closeManagerMenu();
   await showStaffModal();
 });
+
+managerMenuCopyPreviousBtn.addEventListener(
+  "click",
+  copyPreviousWeek
+);
 
 managerMenuClearBtn.addEventListener("click", async () => {
   if (managerMenuClearBtn.disabled) {

@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "2.5.0-dev",
+    date: "3 August 2026",
+    changes: [
+      "Added a manager-only Copy Previous Week action.",
+      "Previous-week shifts and split shifts can now be copied into the selected week.",
+      "An overwrite warning appears only when the destination week already contains values.",
+      "Manager notes, manager name and manager date are not copied.",
+      "The copied week is saved automatically."
+    ]
+  },
+  {
     version: "2.4.2-dev",
     date: "3 August 2026",
     changes: [

@@ -2330,3 +2330,24 @@ body.staff-modal-open {
     display: none !important;
   }
 }
+
+
+/* =====================================================
+   COPY PREVIOUS WEEK — v2.5.0-dev
+   ===================================================== */
+
+.manager-menu-copy-previous {
+  background: #edf5f9;
+  color: #315a72;
+  border-color: #7aa6bd;
+  cursor: pointer;
+}
+
+.manager-menu-copy-previous:hover {
+  background: #dcecf4;
+  transform: translateY(-1px);
+}
+
+.manager-menu-copy-previous:active {
+  transform: translateY(1px);
+}

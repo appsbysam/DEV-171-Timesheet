@@ -3066,7 +3066,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.2"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.3"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -4768,10 +4768,7 @@ function openManagerLogin() {
     "staff-modal-open"
   );
 
-  setTimeout(
-    () => managerLoginPin.focus(),
-    0
-  );
+  updateManagerPinDots();
 }
 
 function closeManagerLogin() {

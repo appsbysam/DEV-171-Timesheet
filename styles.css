@@ -4027,3 +4027,30 @@ body.audit-log-modal-open {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =====================================================
+   PIN KEYPAD READABILITY & MOBILE KEYBOARD — v3.4.3
+   ===================================================== */
+
+.manager-pin-keypad button {
+  border-color: #17833b;
+  background: #249c4b;
+  color: #fff;
+}
+
+.manager-pin-keypad button:hover {
+  border-color: #126d31;
+  background: #208d44;
+  color: #fff;
+}
+
+.manager-pin-keypad button:active {
+  background: #197b39;
+  color: #fff;
+}
+
+.manager-pin-dots span.is-filled {
+  border-color: #249c4b;
+  background: #249c4b;
+}

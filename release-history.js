@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.4.3",
+    date: "4 August 2026",
+    changes: [
+      "Improved Manager PIN keypad readability.",
+      "Changed keypad buttons to a medium green background with white text.",
+      "Changed filled PIN indicators to match the green app theme.",
+      "Stopped the phone's native numeric keyboard from opening while using the custom PIN keypad.",
+      "No database changes are required."
+    ]
+  },
+  {
     version: "3.4.2",
     date: "4 August 2026",
     changes: [

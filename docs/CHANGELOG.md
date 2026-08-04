@@ -1,5 +1,18 @@
 # 171 Café Staff Timesheet
 
+## Version 3.4.3
+Released: 4 August 2026
+
+### Improved
+- Changed Manager PIN keypad buttons to a medium green background with white text.
+- Changed completed PIN indicators to green to match the app theme.
+- Prevented the phone's native numeric keyboard from opening when using the custom PIN keypad.
+
+### Database
+- No Supabase database changes are required.
+
+---
+
 ## Version 3.4.2
 Released: 4 August 2026
 
@@ -306,7 +319,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.4.2**
+-   Current production version: **3.4.3**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

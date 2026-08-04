@@ -218,6 +218,30 @@ const appUpdateUnsavedMessage =
 const appUpdateNowBtn =
   document.getElementById("appUpdateNowBtn");
 
+const userIdentityModal =
+  document.getElementById("userIdentityModal");
+
+const userIdentityForm =
+  document.getElementById("userIdentityForm");
+
+const userIdentityName =
+  document.getElementById("userIdentityName");
+
+const userIdentityMessage =
+  document.getElementById("userIdentityMessage");
+
+const userIdentityContinueBtn =
+  document.getElementById("userIdentityContinueBtn");
+
+const inactiveUserPanel =
+  document.getElementById("inactiveUserPanel");
+
+const inactiveUserMessage =
+  document.getElementById("inactiveUserMessage");
+
+const checkUserAgainBtn =
+  document.getElementById("checkUserAgainBtn");
+
 let staffMembers = [];
 let saveTimer = null;
 let isLoading = false;
@@ -329,6 +353,494 @@ let staffOperationBusy = false;
 let staffStatusResetTimer = null;
 let staffToastTimer = null;
 let pendingManagerAction = null;
+
+
+/* =====================================================
+   USER IDENTITY FOUNDATION — v3.1.0
+   ===================================================== */
+
+const USER_ID_STORAGE_KEY =
+  "171-timesheet-user-id";
+
+const USER_NAME_STORAGE_KEY =
+  "171-timesheet-user-name";
+
+const DEVICE_ID_STORAGE_KEY =
+  "171-timesheet-device-id";
+
+const DEVICE_TYPE_STORAGE_KEY =
+  "171-timesheet-device-type";
+
+let resolvedAppUser = null;
+let identityResolution = null;
+
+function createDeviceId() {
+  if (
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ) {
+    return window.crypto
+      .randomUUID()
+      .replace(/-/g, "")
+      .slice(0, 12)
+      .toUpperCase();
+  }
+
+  return (
+    Date.now().toString(16) +
+    Math.random().toString(16).slice(2)
+  )
+    .slice(0, 12)
+    .toUpperCase();
+}
+
+function detectDeviceType() {
+  const userAgent =
+    navigator.userAgent || "";
+
+  if (/iPhone/i.test(userAgent)) {
+    return "iPhone";
+  }
+
+  if (/Android/i.test(userAgent)) {
+    return /Mobile/i.test(userAgent)
+      ? "Android phone"
+      : "Android device";
+  }
+
+  if (/iPad/i.test(userAgent)) {
+    return "iPad";
+  }
+
+  return "Mobile device";
+}
+
+function ensureStoredDeviceIdentity() {
+  let deviceId =
+    localStorage.getItem(
+      DEVICE_ID_STORAGE_KEY
+    );
+
+  if (
+    !deviceId ||
+    !/^[A-Z0-9]{8,40}$/.test(deviceId)
+  ) {
+    deviceId = createDeviceId();
+
+    localStorage.setItem(
+      DEVICE_ID_STORAGE_KEY,
+      deviceId
+    );
+  }
+
+  let deviceType =
+    localStorage.getItem(
+      DEVICE_TYPE_STORAGE_KEY
+    );
+
+  if (!deviceType) {
+    deviceType = detectDeviceType();
+
+    localStorage.setItem(
+      DEVICE_TYPE_STORAGE_KEY,
+      deviceType
+    );
+  }
+
+  return {
+    deviceId,
+    deviceType
+  };
+}
+
+function readStoredUserIdentity() {
+  const id =
+    localStorage.getItem(
+      USER_ID_STORAGE_KEY
+    );
+
+  const name =
+    localStorage.getItem(
+      USER_NAME_STORAGE_KEY
+    );
+
+  if (!id || !name) {
+    return null;
+  }
+
+  return {
+    id,
+    name
+  };
+}
+
+function storeUserIdentity(member) {
+  localStorage.setItem(
+    USER_ID_STORAGE_KEY,
+    String(member.id)
+  );
+
+  localStorage.setItem(
+    USER_NAME_STORAGE_KEY,
+    String(member.name)
+  );
+
+  const device =
+    ensureStoredDeviceIdentity();
+
+  resolvedAppUser = {
+    id: String(member.id),
+    name: String(member.name),
+    active: member.active !== false,
+    ...device
+  };
+
+  return resolvedAppUser;
+}
+
+function clearStoredUserIdentity() {
+  localStorage.removeItem(
+    USER_ID_STORAGE_KEY
+  );
+
+  localStorage.removeItem(
+    USER_NAME_STORAGE_KEY
+  );
+
+  resolvedAppUser = null;
+}
+
+function showIdentityModal() {
+  userIdentityModal.hidden = false;
+
+  document.body.classList.add(
+    "user-identity-modal-open"
+  );
+}
+
+function hideIdentityModal() {
+  userIdentityModal.hidden = true;
+
+  document.body.classList.remove(
+    "user-identity-modal-open"
+  );
+}
+
+function showIdentityEntry() {
+  showIdentityModal();
+
+  userIdentityForm.hidden = false;
+  inactiveUserPanel.hidden = true;
+
+  userIdentityMessage.textContent = "";
+  userIdentityMessage.classList.remove(
+    "is-error",
+    "is-success"
+  );
+
+  userIdentityContinueBtn.disabled = false;
+  userIdentityContinueBtn.textContent =
+    "Continue";
+
+  window.setTimeout(() => {
+    userIdentityName.focus();
+  }, 50);
+}
+
+function showInactiveUser(member) {
+  showIdentityModal();
+
+  userIdentityForm.hidden = true;
+  inactiveUserPanel.hidden = false;
+
+  inactiveUserMessage.textContent =
+    `Hi ${member.name}. Your username is not yet active. Please ask your manager to activate it.`;
+}
+
+async function loadAllIdentityStaff() {
+  return StaffStorage.loadAll();
+}
+
+function findStoredMember(
+  allStaff,
+  storedIdentity
+) {
+  const byId =
+    allStaff.find(
+      (member) =>
+        String(member.id) ===
+        String(storedIdentity.id)
+    );
+
+  if (byId) {
+    return byId;
+  }
+
+  const storedName =
+    String(storedIdentity.name)
+      .trim()
+      .toLocaleLowerCase();
+
+  return allStaff.find(
+    (member) =>
+      String(member.name)
+        .trim()
+        .toLocaleLowerCase() ===
+      storedName
+  );
+}
+
+async function resolveStoredIdentity() {
+  const storedIdentity =
+    readStoredUserIdentity();
+
+  if (!storedIdentity) {
+    return false;
+  }
+
+  try {
+    const allStaff =
+      await loadAllIdentityStaff();
+
+    const member =
+      findStoredMember(
+        allStaff,
+        storedIdentity
+      );
+
+    if (!member) {
+      clearStoredUserIdentity();
+      return false;
+    }
+
+    storeUserIdentity(member);
+
+    if (member.active === false) {
+      showInactiveUser(member);
+      return null;
+    }
+
+    hideIdentityModal();
+    return true;
+  } catch (error) {
+    console.error(
+      "Unable to validate stored user:",
+      error
+    );
+
+    showIdentityEntry();
+
+    userIdentityMessage.textContent =
+      "Unable to check your username. Please check your connection and try again.";
+
+    userIdentityMessage.classList.add(
+      "is-error"
+    );
+
+    return null;
+  }
+}
+
+async function submitUserIdentity(name) {
+  const cleanedName =
+    String(name || "").trim();
+
+  if (!cleanedName) {
+    userIdentityMessage.textContent =
+      "Please enter your first name.";
+
+    userIdentityMessage.classList.add(
+      "is-error"
+    );
+
+    return;
+  }
+
+  userIdentityContinueBtn.disabled = true;
+  userIdentityContinueBtn.textContent =
+    "Checking…";
+
+  userIdentityMessage.textContent = "";
+  userIdentityMessage.classList.remove(
+    "is-error",
+    "is-success"
+  );
+
+  try {
+    const allStaff =
+      await loadAllIdentityStaff();
+
+    const normalisedName =
+      cleanedName.toLocaleLowerCase();
+
+    const member =
+      allStaff.find(
+        (person) =>
+          String(person.name)
+            .trim()
+            .toLocaleLowerCase() ===
+          normalisedName
+      );
+
+    if (!member) {
+      userIdentityMessage.textContent =
+        "User not found. Please check the spelling and try again. If the problem persists, contact support.";
+
+      userIdentityMessage.classList.add(
+        "is-error"
+      );
+
+      userIdentityContinueBtn.disabled =
+        false;
+
+      userIdentityContinueBtn.textContent =
+        "Continue";
+
+      userIdentityName.select();
+      return;
+    }
+
+    storeUserIdentity(member);
+
+    if (member.active === false) {
+      showInactiveUser(member);
+      return;
+    }
+
+    userIdentityMessage.textContent =
+      `Welcome, ${member.name}.`;
+
+    userIdentityMessage.classList.add(
+      "is-success"
+    );
+
+    hideIdentityModal();
+
+    if (identityResolution) {
+      identityResolution(true);
+      identityResolution = null;
+    }
+  } catch (error) {
+    console.error(
+      "Unable to identify user:",
+      error
+    );
+
+    userIdentityMessage.textContent =
+      "Unable to check your username. Please check your connection and try again.";
+
+    userIdentityMessage.classList.add(
+      "is-error"
+    );
+
+    userIdentityContinueBtn.disabled =
+      false;
+
+    userIdentityContinueBtn.textContent =
+      "Continue";
+  }
+}
+
+async function ensureAppUserIdentity() {
+  ensureStoredDeviceIdentity();
+
+  const storedResult =
+    await resolveStoredIdentity();
+
+  if (storedResult === true) {
+    return true;
+  }
+
+  if (storedResult === null) {
+    return new Promise((resolve) => {
+      identityResolution = resolve;
+    });
+  }
+
+  showIdentityEntry();
+
+  return new Promise((resolve) => {
+    identityResolution = resolve;
+  });
+}
+
+userIdentityForm.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    await submitUserIdentity(
+      userIdentityName.value
+    );
+  }
+);
+
+checkUserAgainBtn.addEventListener(
+  "click",
+  async () => {
+    checkUserAgainBtn.disabled = true;
+    checkUserAgainBtn.textContent =
+      "Checking…";
+
+    try {
+      const storedIdentity =
+        readStoredUserIdentity();
+
+      const allStaff =
+        await loadAllIdentityStaff();
+
+      const member =
+        storedIdentity
+          ? findStoredMember(
+              allStaff,
+              storedIdentity
+            )
+          : null;
+
+      if (!member) {
+        clearStoredUserIdentity();
+        showIdentityEntry();
+
+        userIdentityMessage.textContent =
+          "User not found. Please enter your name again.";
+
+        userIdentityMessage.classList.add(
+          "is-error"
+        );
+
+        return;
+      }
+
+      storeUserIdentity(member);
+
+      if (member.active === false) {
+        inactiveUserMessage.textContent =
+          `Hi ${member.name}. Your username is still not active. Please ask your manager to activate it.`;
+
+        return;
+      }
+
+      hideIdentityModal();
+
+      if (identityResolution) {
+        identityResolution(true);
+        identityResolution = null;
+      }
+    } catch (error) {
+      console.error(
+        "Unable to recheck user:",
+        error
+      );
+
+      inactiveUserMessage.textContent =
+        "Unable to check your username. Please check your connection and try again.";
+    } finally {
+      checkUserAgainBtn.disabled = false;
+      checkUserAgainBtn.textContent =
+        "Check Again";
+    }
+  }
+);
 
 /* =====================================================
    LOCAL STORAGE KEYS
@@ -1208,7 +1720,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.0.8"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.1.0"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -3398,6 +3910,13 @@ goToCurrentWeekBtn.addEventListener(
 
 async function initialiseApp() {
   addModeBadge();
+
+  const identityReady =
+    await ensureAppUserIdentity();
+
+  if (!identityReady) {
+    return;
+  }
 
   const today = new Date();
 

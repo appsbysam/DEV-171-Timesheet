@@ -1,5 +1,17 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.1.0",
+    date: "4 August 2026",
+    changes: [
+      "Added one-time staff identification on each phone.",
+      "Names are checked case-insensitively against all staff records.",
+      "Active users continue directly into the app.",
+      "Inactive users are remembered and shown a Check Again activation screen.",
+      "Added a silently generated device ID and automatically detected device type.",
+      "Stored staff ID and official database name for the future audit log."
+    ]
+  },
+  {
     version: "3.0.9",
     date: "4 August 2026",
     changes: [

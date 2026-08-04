@@ -1,5 +1,24 @@
 # 171 Café Staff Timesheet
 
+## Version 3.1.0
+Released: 4 August 2026
+
+### Added
+- Added a one-time first-name prompt on each phone.
+- Checks the entered name case-insensitively against all staff records, including active and inactive staff.
+- Stores the official staff ID and database spelling locally after a successful match.
+- Active users continue into the timesheet.
+- Inactive users are remembered and shown a **Check Again** screen until a manager activates them.
+- Generates and stores an anonymous device ID silently.
+- Detects and stores a simple device type such as **Android phone** or **iPhone**.
+- Repeats the identification process if the stored staff identity is missing or invalid.
+
+### Foundation
+- Establishes the user and device identity required for the upcoming audit log.
+- This release does not yet create or write to an audit table.
+
+---
+
 ## Version 3.0.9
 Released: 4 August 2026
 
@@ -136,7 +155,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.0.9**
+-   Current production version: **3.1.0**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

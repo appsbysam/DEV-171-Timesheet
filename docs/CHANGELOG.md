@@ -1,5 +1,21 @@
 # 171 Café Staff Timesheet
 
+## Version 3.2.2
+Released: 4 August 2026
+
+### Added
+- Added `role` support to staff records with the values **staff** and **manager**.
+- Inactive users whose role is **manager** now bypass the inactive-user screen.
+- Inactive managers are taken directly to Manager Mode sign-in.
+- If a valid manager session already exists, Manager Mode opens immediately.
+- Inactive non-manager users continue to see the normal activation message.
+- Newly added staff members default to the **staff** role.
+
+### Database
+Run the supplied `database-update-v3.2.2.sql` once in the DEV Supabase SQL Editor before testing.
+
+---
+
 ## Version 3.2.1
 Released: 4 August 2026
 
@@ -216,7 +232,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.2.1**
+-   Current production version: **3.2.2**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

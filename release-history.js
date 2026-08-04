@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.2.2",
+    date: "4 August 2026",
+    changes: [
+      "Added staff and manager roles to staff records.",
+      "Inactive managers now bypass the inactive-user prompt.",
+      "Inactive managers are taken directly to Manager Mode authentication.",
+      "An existing valid manager session opens Manager Mode immediately.",
+      "Inactive non-managers continue to see the activation screen."
+    ]
+  },
+  {
     version: "3.2.1",
     date: "4 August 2026",
     changes: [

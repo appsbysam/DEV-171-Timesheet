@@ -43,12 +43,14 @@ const DEFAULT_LOCAL_STAFF = [
     id: "local-mikayla",
     name: "Mikayla",
     active: true,
+    role: "staff",
     display_order: 1
   },
   {
     id: "local-monique",
     name: "Monique",
     active: true,
+    role: "staff",
     display_order: 2
   }
 ];
@@ -368,6 +370,9 @@ const USER_ID_STORAGE_KEY =
 const USER_NAME_STORAGE_KEY =
   "171-timesheet-user-name";
 
+const USER_ROLE_STORAGE_KEY =
+  "171-timesheet-user-role";
+
 const DEVICE_ID_STORAGE_KEY =
   "171-timesheet-device-id";
 
@@ -377,6 +382,7 @@ const DEVICE_TYPE_STORAGE_KEY =
 let resolvedAppUser = null;
 let identityResolution = null;
 let inactiveRestrictedMode = false;
+let autoOpenManagerModeAfterInit = false;
 
 let lastSavedAuditSnapshot = new Map();
 let pendingAuditChanges = new Map();
@@ -507,6 +513,14 @@ function updateHeaderUserIdentity() {
       : "";
 }
 
+function isManagerRole(member) {
+  return (
+    String(member?.role || "staff")
+      .trim()
+      .toLowerCase() === "manager"
+  );
+}
+
 function storeUserIdentity(member) {
   localStorage.setItem(
     USER_ID_STORAGE_KEY,
@@ -518,6 +532,13 @@ function storeUserIdentity(member) {
     String(member.name)
   );
 
+  localStorage.setItem(
+    USER_ROLE_STORAGE_KEY,
+    isManagerRole(member)
+      ? "manager"
+      : "staff"
+  );
+
   const device =
     ensureStoredDeviceIdentity();
 
@@ -525,6 +546,10 @@ function storeUserIdentity(member) {
     id: String(member.id),
     name: String(member.name),
     active: member.active !== false,
+    role:
+      isManagerRole(member)
+        ? "manager"
+        : "staff",
     ...device
   };
 
@@ -540,6 +565,10 @@ function clearStoredUserIdentity() {
 
   localStorage.removeItem(
     USER_NAME_STORAGE_KEY
+  );
+
+  localStorage.removeItem(
+    USER_ROLE_STORAGE_KEY
   );
 
   resolvedAppUser = null;
@@ -689,12 +718,23 @@ async function resolveStoredIdentity() {
 
     storeUserIdentity(member);
 
+    if (
+      member.active === false &&
+      isManagerRole(member)
+    ) {
+      inactiveRestrictedMode = true;
+      autoOpenManagerModeAfterInit = true;
+      hideIdentityModal();
+      return true;
+    }
+
     if (member.active === false) {
       showInactiveUser(member);
       return null;
     }
 
     inactiveRestrictedMode = false;
+    autoOpenManagerModeAfterInit = false;
     hideIdentityModal();
     return true;
   } catch (error) {
@@ -777,10 +817,28 @@ async function submitUserIdentity(name) {
 
     storeUserIdentity(member);
 
+    if (
+      member.active === false &&
+      isManagerRole(member)
+    ) {
+      inactiveRestrictedMode = true;
+      autoOpenManagerModeAfterInit = true;
+      hideIdentityModal();
+
+      if (identityResolution) {
+        identityResolution(true);
+        identityResolution = null;
+      }
+
+      return;
+    }
+
     if (member.active === false) {
       showInactiveUser(member);
       return;
     }
+
+    autoOpenManagerModeAfterInit = false;
 
     userIdentityMessage.textContent =
       `Welcome, ${member.name}.`;
@@ -889,6 +947,22 @@ checkUserAgainBtn.addEventListener(
 
       storeUserIdentity(member);
 
+      if (
+        member.active === false &&
+        isManagerRole(member)
+      ) {
+        inactiveRestrictedMode = true;
+        autoOpenManagerModeAfterInit = true;
+        hideIdentityModal();
+
+        if (identityResolution) {
+          identityResolution(true);
+          identityResolution = null;
+        }
+
+        return;
+      }
+
       if (member.active === false) {
         inactiveUserMessage.textContent =
           `Hi ${member.name}. Your username is still not active. Please ask your manager to activate it. If you are a manager, you can continue and sign in to Manager Mode.`;
@@ -897,6 +971,7 @@ checkUserAgainBtn.addEventListener(
       }
 
       inactiveRestrictedMode = false;
+      autoOpenManagerModeAfterInit = false;
       hideIdentityModal();
 
       if (identityResolution) {
@@ -1573,7 +1648,7 @@ const StaffStorage = {
 
     const { data, error } = await db
       .from("staff_members")
-      .select("id, name, active, created_at, display_order")
+      .select("id, name, active, role, created_at, display_order")
       .order("display_order", { ascending: true })
       .order("created_at", { ascending: true });
 
@@ -1614,6 +1689,7 @@ const StaffStorage = {
         id: `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
         name: cleanedName,
         active: true,
+        role: "staff",
         display_order: nextOrder,
         created_at: new Date().toISOString()
       };
@@ -1628,6 +1704,7 @@ const StaffStorage = {
       .insert({
         name: cleanedName,
         active: true,
+        role: "staff",
         display_order: nextOrder
       })
       .select("id, name, active, created_at, display_order")
@@ -2280,7 +2357,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.2.1"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.2.2"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -4174,6 +4251,7 @@ managerLoginForm.addEventListener("submit", async (event) => {
     closeManagerLogin();
 
     managerSignedIn = true;
+    autoOpenManagerModeAfterInit = false;
     applyManagerControlState();
     applyInactiveRestrictedMode();
 
@@ -4577,6 +4655,16 @@ async function initialiseApp() {
   await load();
   updateClearButtonState();
   applyInactiveRestrictedMode();
+
+  if (autoOpenManagerModeAfterInit) {
+    window.setTimeout(() => {
+      if (managerSignedIn) {
+        openManagerMenu();
+      } else {
+        openManagerLogin();
+      }
+    }, 150);
+  }
 }
 
 if (!LOCAL_MODE) {

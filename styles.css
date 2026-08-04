@@ -3746,3 +3746,284 @@ body.audit-log-modal-open {
     display: none !important;
   }
 }
+
+
+/* =====================================================
+   MANAGER PIN & USER ROLES — v3.4.0
+   ===================================================== */
+
+.manager-menu-change-pin {
+  border-color: #805b1f !important;
+  background: #fff8e8 !important;
+  color: #6d4810 !important;
+}
+
+.manager-pin-form {
+  text-align: center;
+}
+
+.manager-pin-user {
+  margin: 0 0 12px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: #f3f5f7;
+  color: #444;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.manager-pin-user strong {
+  color: #111;
+}
+
+.manager-pin-input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.manager-pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 12px 0 18px;
+}
+
+.manager-pin-dots span {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #777;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.manager-pin-dots span.is-filled {
+  border-color: #111;
+  background: #111;
+}
+
+.manager-pin-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.manager-pin-keypad button {
+  min-height: 48px;
+  border-color: #aaa;
+  border-radius: 10px;
+  background: #f7f7f7;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.manager-pin-keypad button:active {
+  transform: translateY(1px);
+  background: #e9e9e9;
+}
+
+.manager-pin-help {
+  margin: 11px 0 0;
+  color: #777;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.new-user-role {
+  display: flex;
+  gap: 14px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid #bbb;
+  border-radius: 9px;
+}
+
+.new-user-role legend {
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.new-user-role label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.new-user-role input {
+  width: auto;
+  margin: 0;
+}
+
+.new-manager-pin-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.new-manager-pin-fields[hidden] {
+  display: none !important;
+}
+
+.add-staff-form > input,
+.new-manager-pin-fields input {
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+}
+
+.add-staff-form > button {
+  width: 100%;
+  min-height: 43px;
+  margin-top: 3px;
+}
+
+.staff-manage-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.staff-role-badge {
+  display: inline-flex;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.staff-role-badge.is-manager {
+  background: #e7eefc;
+  color: #274f9a;
+}
+
+.staff-role-badge.is-staff {
+  background: #e6f7eb;
+  color: #17652a;
+}
+
+.change-pin-modal[hidden] {
+  display: none !important;
+}
+
+.change-pin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1850;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+
+.change-pin-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.66);
+  backdrop-filter: blur(3px);
+}
+
+.change-pin-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 430px);
+  padding: 20px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+.change-pin-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid #ddd;
+}
+
+.change-pin-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.change-pin-header p {
+  margin: 5px 0 0;
+  color: #666;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.change-pin-close {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #eee;
+  font-size: 25px;
+}
+
+.change-pin-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 15px;
+}
+
+.change-pin-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid #aaa;
+  border-radius: 8px;
+  font-size: 18px;
+  letter-spacing: 5px;
+  text-align: center;
+}
+
+.change-pin-form button {
+  min-height: 45px;
+  margin-top: 5px;
+  border-color: #13863a;
+  background: #1fa64b;
+  color: #fff;
+}
+
+.change-pin-message {
+  min-height: 18px;
+  margin: 10px 0 0;
+  color: #17652a;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.change-pin-message.error {
+  color: #a61d24;
+}
+
+@media (max-width: 460px) {
+  .change-pin-modal {
+    align-items: end;
+    padding: 0;
+  }
+
+  .change-pin-dialog {
+    width: 100%;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .new-manager-pin-fields {
+    grid-template-columns: 1fr;
+  }
+}

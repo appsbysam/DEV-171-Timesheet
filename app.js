@@ -106,6 +106,15 @@ const addStaffForm =
 const newStaffName =
   document.getElementById("newStaffName");
 
+const newManagerPinFields =
+  document.getElementById("newManagerPinFields");
+
+const newStaffPin =
+  document.getElementById("newStaffPin");
+
+const newStaffPinConfirm =
+  document.getElementById("newStaffPinConfirm");
+
 const activeStaffList =
   document.getElementById("activeStaffList");
 
@@ -211,6 +220,33 @@ const closeRosterActionBtn =
 const managerMenuSignOutBtn =
   document.getElementById("managerMenuSignOutBtn");
 
+const managerMenuChangePinBtn =
+  document.getElementById("managerMenuChangePinBtn");
+
+const changePinModal =
+  document.getElementById("changePinModal");
+
+const closeChangePinBtn =
+  document.getElementById("closeChangePinBtn");
+
+const changePinForm =
+  document.getElementById("changePinForm");
+
+const currentManagerPin =
+  document.getElementById("currentManagerPin");
+
+const newManagerPin =
+  document.getElementById("newManagerPin");
+
+const confirmManagerPin =
+  document.getElementById("confirmManagerPin");
+
+const changePinSubmitBtn =
+  document.getElementById("changePinSubmitBtn");
+
+const changePinMessage =
+  document.getElementById("changePinMessage");
+
 const managerLoginModal =
   document.getElementById("managerLoginModal");
 
@@ -220,11 +256,14 @@ const closeManagerLoginBtn =
 const managerLoginForm =
   document.getElementById("managerLoginForm");
 
-const managerLoginEmail =
-  document.getElementById("managerLoginEmail");
+const managerLoginPin =
+  document.getElementById("managerLoginPin");
 
-const managerLoginPassword =
-  document.getElementById("managerLoginPassword");
+const managerPinUserName =
+  document.getElementById("managerPinUserName");
+
+const managerPinKeypad =
+  document.getElementById("managerPinKeypad");
 
 const managerLoginSubmitBtn =
   document.getElementById("managerLoginSubmitBtn");
@@ -385,6 +424,14 @@ let staffOperationBusy = false;
 let staffStatusResetTimer = null;
 let staffToastTimer = null;
 let pendingManagerAction = null;
+
+const MANAGER_SESSION_STORAGE_KEY =
+  "171-timesheet-manager-session-token";
+
+let managerSessionToken =
+  sessionStorage.getItem(
+    MANAGER_SESSION_STORAGE_KEY
+  ) || "";
 
 
 /* =====================================================
@@ -1155,67 +1202,29 @@ const AuditStorage = {
       );
     }
 
-    let query =
-      db
-        .from("audit_log")
-        .select(
-          [
-            "id",
-            "created_at",
-            "changed_by_staff_id",
-            "changed_by_name",
-            "device_id",
-            "device_type",
-            "action_type",
-            "performed_role",
-            "week_start",
-            "employee_name",
-            "day_name",
-            "field_name",
-            "old_value",
-            "new_value",
-            "details",
-            "environment"
-          ].join(",")
-        )
-        .order(
-          "created_at",
-          { ascending: false }
-        )
-        .range(
-          offset,
-          offset + limit - 1
-        );
-
-    if (actionType) {
-      query =
-        query.eq(
-          "action_type",
-          actionType
-        );
-    }
-
-    if (changedBy) {
-      query =
-        query.eq(
-          "changed_by_name",
-          changedBy
-        );
-    }
-
     const cutoff =
       getAuditPeriodCutoff(period);
 
-    if (cutoff) {
-      query =
-        query.gte(
-          "created_at",
-          cutoff.toISOString()
-        );
-    }
-
     const { data, error } =
-      await query;
+      await db.rpc(
+        "manager_list_audit",
+        {
+          p_token:
+            managerSessionToken,
+          p_action_type:
+            actionType || null,
+          p_changed_by:
+            changedBy || null,
+          p_created_after:
+            cutoff
+              ? cutoff.toISOString()
+              : null,
+          p_offset:
+            offset,
+          p_limit:
+            limit
+        }
+      );
 
     if (error) {
       throw error;
@@ -2310,57 +2319,87 @@ const StaffStorage = {
     return allStaff.filter((member) => member.active !== false);
   },
 
-  async add(name) {
+  async add(name, role = "staff", pin = "") {
     const cleanedName = name.trim();
+    const cleanedRole =
+      role === "manager"
+        ? "manager"
+        : "staff";
+
     const allStaff = await this.loadAll();
 
     if (
       allStaff.some(
         (member) =>
-          member.name.trim().toLowerCase() === cleanedName.toLowerCase()
+          member.name.trim().toLowerCase() ===
+          cleanedName.toLowerCase()
       )
     ) {
-      throw new Error("A staff member with that name already exists.");
+      throw new Error(
+        "A user with that name already exists."
+      );
     }
 
     const nextOrder =
       allStaff.reduce(
         (highest, member) =>
-          Math.max(highest, Number(member.display_order || 0)),
+          Math.max(
+            highest,
+            Number(
+              member.display_order || 0
+            )
+          ),
         0
       ) + 1;
 
     if (LOCAL_MODE) {
       const member = {
-        id: `local-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        id:
+          `local-${Date.now()}-${Math.random()
+            .toString(16)
+            .slice(2)}`,
         name: cleanedName,
         active: true,
-        role: "staff",
+        role: cleanedRole,
         display_order: nextOrder,
-        created_at: new Date().toISOString()
+        created_at:
+          new Date().toISOString()
       };
 
       allStaff.push(member);
-      localStorage.setItem(staffStorageKey(), JSON.stringify(allStaff));
+
+      localStorage.setItem(
+        staffStorageKey(),
+        JSON.stringify(allStaff)
+      );
+
       return member;
     }
 
-    const { data, error } = await db
-      .from("staff_members")
-      .insert({
-        name: cleanedName,
-        active: true,
-        role: "staff",
-        display_order: nextOrder
-      })
-      .select("id, name, active, created_at, display_order")
-      .single();
+    const { data, error } =
+      await db.rpc(
+        "manager_add_staff",
+        {
+          p_token:
+            managerSessionToken,
+          p_name:
+            cleanedName,
+          p_role:
+            cleanedRole,
+          p_pin:
+            cleanedRole === "manager"
+              ? pin
+              : null
+        }
+      );
 
     if (error) {
       throw error;
     }
 
-    return data;
+    return Array.isArray(data)
+      ? data[0]
+      : data;
   },
 
   async rename(id, name) {
@@ -2388,10 +2427,22 @@ const StaffStorage = {
       return;
     }
 
-    const { error } = await db
-      .from("staff_members")
-      .update({ name: cleanedName })
-      .eq("id", id);
+    const { error } =
+      await db.rpc(
+        "manager_update_staff",
+        {
+          p_token:
+            managerSessionToken,
+          p_staff_id:
+            id,
+          p_name:
+            cleanedName,
+          p_active:
+            null,
+          p_role:
+            null
+        }
+      );
 
     if (error) {
       throw error;
@@ -2412,10 +2463,22 @@ const StaffStorage = {
       return;
     }
 
-    const { error } = await db
-      .from("staff_members")
-      .update({ active })
-      .eq("id", id);
+    const { error } =
+      await db.rpc(
+        "manager_update_staff",
+        {
+          p_token:
+            managerSessionToken,
+          p_staff_id:
+            id,
+          p_name:
+            null,
+          p_active:
+            active,
+          p_role:
+            null
+        }
+      );
 
     if (error) {
       throw error;
@@ -3003,7 +3066,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.3.0"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.1"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -4508,7 +4571,27 @@ function createStaffManagerRow(member, index) {
 
   const name = document.createElement("div");
   name.className = "staff-manage-name";
-  name.textContent = member.name;
+
+  const nameText =
+    document.createElement("span");
+
+  nameText.textContent = member.name;
+
+  const roleBadge =
+    document.createElement("span");
+
+  roleBadge.className =
+    `staff-role-badge is-${member.role || "staff"}`;
+
+  roleBadge.textContent =
+    member.role === "manager"
+      ? "Manager"
+      : "Staff";
+
+  name.append(
+    nameText,
+    roleBadge
+  );
 
   const actions = document.createElement("div");
   actions.className = "staff-row-actions";
@@ -4628,54 +4711,192 @@ function createStaffManagerRow(member, index) {
   return row;
 }
 
-function setManagerLoginMessage(message, isError = false) {
-  managerLoginMessage.textContent = message;
-  managerLoginMessage.classList.toggle("error", isError);
+function setManagerLoginMessage(
+  message,
+  isError = false
+) {
+  managerLoginMessage.textContent =
+    message;
+
+  managerLoginMessage.classList.toggle(
+    "error",
+    isError
+  );
+}
+
+function updateManagerPinDots() {
+  const length =
+    managerLoginPin.value.length;
+
+  managerLoginModal
+    .querySelectorAll(
+      ".manager-pin-dots span"
+    )
+    .forEach(
+      (dot, index) => {
+        dot.classList.toggle(
+          "is-filled",
+          index < length
+        );
+      }
+    );
+}
+
+function setManagerPinValue(value) {
+  managerLoginPin.value =
+    String(value)
+      .replace(/\D/g, "")
+      .slice(0, 4);
+
+  updateManagerPinDots();
 }
 
 function openManagerLogin() {
   setManagerLoginMessage("");
-  managerLoginPassword.value = "";
+  setManagerPinValue("");
+
+  managerPinUserName.textContent =
+    resolvedAppUser?.name ||
+    localStorage.getItem(
+      USER_NAME_STORAGE_KEY
+    ) ||
+    "Manager";
+
   managerLoginModal.hidden = false;
-  document.body.classList.add("staff-modal-open");
-  setTimeout(() => managerLoginEmail.focus(), 0);
+
+  document.body.classList.add(
+    "staff-modal-open"
+  );
+
+  setTimeout(
+    () => managerLoginPin.focus(),
+    0
+  );
 }
 
 function closeManagerLogin() {
   managerLoginModal.hidden = true;
-  if (staffModal.hidden) {
-    document.body.classList.remove("staff-modal-open");
+
+  if (
+    staffModal.hidden &&
+    changePinModal.hidden
+  ) {
+    document.body.classList.remove(
+      "staff-modal-open"
+    );
   }
 }
 
 async function getManagerSession() {
   if (LOCAL_MODE) {
-    return { local: true };
+    return managerSignedIn
+      ? { local: true }
+      : null;
   }
 
-  const { data, error } = await db.auth.getSession();
+  if (!managerSessionToken) {
+    return null;
+  }
+
+  const { data, error } =
+    await db.rpc(
+      "manager_validate_session",
+      {
+        p_token:
+          managerSessionToken
+      }
+    );
 
   if (error) {
-    throw error;
+    managerSessionToken = "";
+
+    sessionStorage.removeItem(
+      MANAGER_SESSION_STORAGE_KEY
+    );
+
+    return null;
   }
 
-  return data.session;
+  if (!data?.valid) {
+    managerSessionToken = "";
+
+    sessionStorage.removeItem(
+      MANAGER_SESSION_STORAGE_KEY
+    );
+
+    return null;
+  }
+
+  return data;
 }
 
-async function requireManagerSession(onAuthenticated = null) {
-  const session = await getManagerSession();
+async function requireManagerSession(
+  onAuthenticated = null
+) {
+  const session =
+    await getManagerSession();
 
   if (session) {
+    managerSignedIn = true;
     return true;
   }
 
+  managerSignedIn = false;
+
   pendingManagerAction =
-    typeof onAuthenticated === "function"
+    typeof onAuthenticated ===
+    "function"
       ? onAuthenticated
       : null;
 
   openManagerLogin();
   return false;
+}
+
+function setChangePinMessage(
+  message,
+  isError = false
+) {
+  changePinMessage.textContent =
+    message;
+
+  changePinMessage.classList.toggle(
+    "error",
+    isError
+  );
+}
+
+function openChangePinModal() {
+  setChangePinMessage("");
+
+  currentManagerPin.value = "";
+  newManagerPin.value = "";
+  confirmManagerPin.value = "";
+
+  changePinModal.hidden = false;
+
+  document.body.classList.add(
+    "staff-modal-open"
+  );
+
+  setTimeout(
+    () => currentManagerPin.focus(),
+    0
+  );
+}
+
+function closeChangePinModal() {
+  changePinModal.hidden = true;
+
+  if (
+    staffModal.hidden &&
+    managerLoginModal.hidden &&
+    managerMenuModal.hidden
+  ) {
+    document.body.classList.remove(
+      "staff-modal-open"
+    );
+  }
 }
 
 async function renderStaffManager({ showLoading = true } = {}) {
@@ -4863,6 +5084,133 @@ managerMenuGenerateRosterBtn.addEventListener(
   openRosterModal
 );
 
+managerMenuChangePinBtn.addEventListener(
+  "click",
+  () => {
+    closeManagerMenu();
+    openChangePinModal();
+  }
+);
+
+closeChangePinBtn.addEventListener(
+  "click",
+  closeChangePinModal
+);
+
+changePinModal
+  .querySelectorAll(
+    "[data-close-change-pin]"
+  )
+  .forEach((element) => {
+    element.addEventListener(
+      "click",
+      closeChangePinModal
+    );
+  });
+
+changePinForm.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    const currentPin =
+      currentManagerPin.value;
+
+    const nextPin =
+      newManagerPin.value;
+
+    const confirmation =
+      confirmManagerPin.value;
+
+    if (
+      !/^\d{4}$/.test(currentPin) ||
+      !/^\d{4}$/.test(nextPin)
+    ) {
+      setChangePinMessage(
+        "PINs must contain exactly four digits.",
+        true
+      );
+
+      return;
+    }
+
+    if (nextPin !== confirmation) {
+      setChangePinMessage(
+        "The new PINs do not match.",
+        true
+      );
+
+      return;
+    }
+
+    if (currentPin === nextPin) {
+      setChangePinMessage(
+        "Choose a different new PIN.",
+        true
+      );
+
+      return;
+    }
+
+    try {
+      changePinSubmitBtn.disabled =
+        true;
+
+      changePinSubmitBtn.textContent =
+        "Saving…";
+
+      if (!LOCAL_MODE) {
+        const { data, error } =
+          await db.rpc(
+            "manager_change_pin",
+            {
+              p_token:
+                managerSessionToken,
+              p_current_pin:
+                currentPin,
+              p_new_pin:
+                nextPin
+            }
+          );
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data?.success) {
+          throw new Error(
+            data?.message ||
+            "Unable to change PIN."
+          );
+        }
+      }
+
+      setChangePinMessage(
+        "PIN changed successfully."
+      );
+
+      setTimeout(
+        closeChangePinModal,
+        650
+      );
+    } catch (error) {
+      console.error(error);
+
+      setChangePinMessage(
+        error.message ||
+        "Unable to change PIN.",
+        true
+      );
+    } finally {
+      changePinSubmitBtn.disabled =
+        false;
+
+      changePinSubmitBtn.textContent =
+        "Save New PIN";
+    }
+  }
+);
+
 copyRosterBtn.addEventListener(
   "click",
   copyRosterText
@@ -4916,102 +5264,237 @@ managerLoginModal
     });
   });
 
-managerLoginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const email = managerLoginEmail.value.trim();
-  const password = managerLoginPassword.value;
-
-  if (!email || !password) {
-    setManagerLoginMessage("Enter your email and password.", true);
-    return;
-  }
-
-  try {
-    managerLoginSubmitBtn.disabled = true;
-    managerLoginSubmitBtn.textContent = "Signing In…";
-    setManagerLoginMessage("Signing in…");
-
-    const { error } = await db.auth.signInWithPassword({
-      email,
-      password
-    });
-
-    if (error) {
-      throw error;
-    }
-
-    closeManagerLogin();
-
-    managerSignedIn = true;
-    autoOpenManagerModeAfterInit = false;
-    applyManagerControlState();
-    applyInactiveRestrictedMode();
-
-    const actionToRun = pendingManagerAction;
-    pendingManagerAction = null;
-
-    if (actionToRun) {
-      await actionToRun();
-    } else {
-      openManagerMenu();
-    }
-  } catch (error) {
-    console.error(error);
-    setManagerLoginMessage(
-      error.message || "Unable to sign in.",
-      true
+managerLoginPin.addEventListener(
+  "input",
+  () => {
+    setManagerPinValue(
+      managerLoginPin.value
     );
-  } finally {
-    managerLoginSubmitBtn.disabled = false;
-    managerLoginSubmitBtn.textContent = "Sign In";
   }
-});
+);
 
-async function signOutManager() {
-  if (LOCAL_MODE) {
-    managerSignedIn = false;
-    applyManagerControlState();
-    applyInactiveRestrictedMode();
-    closeStaffModal();
-    closeManagerMenu();
-    return;
-  }
+managerPinKeypad.addEventListener(
+  "click",
+  (event) => {
+    const digitButton =
+      event.target.closest(
+        "[data-pin-digit]"
+      );
 
-  try {
-    if (!staffModal.hidden) {
-      setStaffOperationStatus("loading", "Signing out…");
+    if (digitButton) {
+      setManagerPinValue(
+        managerLoginPin.value +
+        digitButton.dataset.pinDigit
+      );
+
+      return;
     }
 
-    const { error } = await db.auth.signOut();
-
-    if (error) {
-      throw error;
+    if (
+      event.target.closest(
+        "[data-pin-clear]"
+      )
+    ) {
+      setManagerPinValue("");
+      return;
     }
 
-    pendingManagerAction = null;
-    managerSignedIn = false;
-    applyManagerControlState();
-    closeStaffModal();
-    closeManagerMenu();
-    setStatus("Manager signed out", false, "saved");
-  } catch (error) {
-    console.error(error);
-
-    if (!staffModal.hidden) {
-      setStaffManagerMessage(error.message, true);
-    } else {
-      setStatus(
-        `Unable to sign out: ${error.message}`,
-        true,
-        "error"
+    if (
+      event.target.closest(
+        "[data-pin-backspace]"
+      )
+    ) {
+      setManagerPinValue(
+        managerLoginPin.value.slice(
+          0,
+          -1
+        )
       );
     }
   }
+);
+
+managerLoginPin.addEventListener(
+  "input",
+  () => {
+    setManagerPinValue(
+      managerLoginPin.value
+    );
+  }
+);
+
+managerPinKeypad.addEventListener(
+  "click",
+  (event) => {
+    const digitButton =
+      event.target.closest(
+        "[data-pin-digit]"
+      );
+
+    if (digitButton) {
+      setManagerPinValue(
+        managerLoginPin.value +
+        digitButton.dataset.pinDigit
+      );
+      return;
+    }
+
+    if (event.target.closest("[data-pin-clear]")) {
+      setManagerPinValue("");
+      return;
+    }
+
+    if (event.target.closest("[data-pin-backspace]")) {
+      setManagerPinValue(
+        managerLoginPin.value.slice(0, -1)
+      );
+    }
+  }
+);
+
+managerLoginForm.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    const pin = managerLoginPin.value;
+
+    if (!/^\d{4}$/.test(pin)) {
+      setManagerLoginMessage(
+        "Enter a four-digit PIN.",
+        true
+      );
+      return;
+    }
+
+    if (
+      !resolvedAppUser?.id ||
+      resolvedAppUser.role !== "manager"
+    ) {
+      setManagerLoginMessage(
+        "The identified user is not a manager.",
+        true
+      );
+      return;
+    }
+
+    try {
+      managerLoginSubmitBtn.disabled = true;
+      managerLoginSubmitBtn.textContent = "Checking…";
+      setManagerLoginMessage("Checking PIN…");
+
+      if (LOCAL_MODE) {
+        if (pin !== "0000") {
+          throw new Error("Incorrect PIN.");
+        }
+
+        managerSessionToken = "local-manager-session";
+      } else {
+        const { data, error } = await db.rpc(
+          "manager_login_with_pin",
+          {
+            p_staff_id: resolvedAppUser.id,
+            p_pin: pin,
+            p_device_id:
+              resolvedAppUser.deviceId || null
+          }
+        );
+
+        if (error) {
+          throw error;
+        }
+
+        if (!data?.success) {
+          throw new Error(
+            data?.message ||
+            "Unable to unlock Manager Mode."
+          );
+        }
+
+        managerSessionToken = data.token;
+      }
+
+      sessionStorage.setItem(
+        MANAGER_SESSION_STORAGE_KEY,
+        managerSessionToken
+      );
+
+      closeManagerLogin();
+
+      managerSignedIn = true;
+      autoOpenManagerModeAfterInit = false;
+
+      applyManagerControlState();
+      applyInactiveRestrictedMode();
+
+      const actionToRun = pendingManagerAction;
+      pendingManagerAction = null;
+
+      if (actionToRun) {
+        await actionToRun();
+      } else {
+        openManagerMenu();
+      }
+    } catch (error) {
+      console.error(error);
+
+      setManagerLoginMessage(
+        error.message ||
+        "Unable to unlock Manager Mode.",
+        true
+      );
+
+      setManagerPinValue("");
+    } finally {
+      managerLoginSubmitBtn.disabled = false;
+      managerLoginSubmitBtn.textContent =
+        "Unlock Manager Mode";
+    }
+  }
+);
+
+async function signOutManager() {
+  try {
+    if (!LOCAL_MODE && managerSessionToken) {
+      await db.rpc(
+        "manager_sign_out",
+        {
+          p_token: managerSessionToken
+        }
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "Unable to revoke manager session:",
+      error
+    );
+  }
+
+  managerSessionToken = "";
+
+  sessionStorage.removeItem(
+    MANAGER_SESSION_STORAGE_KEY
+  );
+
+  managerSignedIn = false;
+
+  applyManagerControlState();
+  applyInactiveRestrictedMode();
+
+  closeStaffModal();
+  closeManagerMenu();
+  closeChangePinModal();
 }
 
-managerSignOutBtn.addEventListener("click", signOutManager);
-managerMenuSignOutBtn.addEventListener("click", signOutManager);
+managerSignOutBtn.addEventListener(
+  "click",
+  signOutManager
+);
+
+managerMenuSignOutBtn.addEventListener(
+  "click",
+  signOutManager
+);
 
 staffModal
   .querySelectorAll("[data-close-staff-modal]")
@@ -5050,33 +5533,120 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-addStaffForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const name = newStaffName.value.trim();
+addStaffForm
+  .querySelectorAll(
+    'input[name="newStaffRole"]'
+  )
+  .forEach((radio) => {
+    radio.addEventListener(
+      "change",
+      () => {
+        const role =
+          addStaffForm.querySelector(
+            'input[name="newStaffRole"]:checked'
+          )?.value || "staff";
 
-  if (!name) {
-    return;
-  }
+        const isManager =
+          role === "manager";
 
-  const addButton = addStaffForm.querySelector('button[type="submit"]');
+        newManagerPinFields.hidden =
+          !isManager;
 
-  const added = await runStaffOperation({
-    busyMessage: `Adding ${name}…`,
-    successMessage: `${name} added`,
-    button: addButton,
-    busyText: "Adding…",
-    highlightClass: "staff-highlight-added",
-    action: async () => {
-      await save();
-      return StaffStorage.add(name);
-    }
+        newStaffPin.required =
+          isManager;
+
+        newStaffPinConfirm.required =
+          isManager;
+
+        if (!isManager) {
+          newStaffPin.value = "";
+          newStaffPinConfirm.value = "";
+        }
+      }
+    );
   });
 
-  if (added) {
-    newStaffName.value = "";
-    newStaffName.focus();
+addStaffForm.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    const name =
+      newStaffName.value.trim();
+
+    const role =
+      addStaffForm.querySelector(
+        'input[name="newStaffRole"]:checked'
+      )?.value || "staff";
+
+    const pin =
+      newStaffPin.value;
+
+    const pinConfirm =
+      newStaffPinConfirm.value;
+
+    if (!name) {
+      return;
+    }
+
+    if (role === "manager") {
+      if (!/^\d{4}$/.test(pin)) {
+        setStaffManagerMessage(
+          "Manager PIN must contain exactly four digits.",
+          true
+        );
+
+        return;
+      }
+
+      if (pin !== pinConfirm) {
+        setStaffManagerMessage(
+          "The manager PINs do not match.",
+          true
+        );
+
+        return;
+      }
+    }
+
+    const addButton =
+      addStaffForm.querySelector(
+        'button[type="submit"]'
+      );
+
+    const result =
+      await runStaffOperation({
+        busyMessage:
+          `Adding ${name}…`,
+        successMessage:
+          `${name} added as ${role}`,
+        button:
+          addButton,
+        busyText:
+          "Adding…",
+        action:
+          async () =>
+            StaffStorage.add(
+              name,
+              role,
+              pin
+            )
+      });
+
+    if (result) {
+      addStaffForm.reset();
+
+      newManagerPinFields.hidden =
+        true;
+
+      newStaffPin.required = false;
+      newStaffPinConfirm.required = false;
+
+      newStaffName.focus();
+    }
   }
-});
+);
+
 
 /* =====================================================
    EVENTS

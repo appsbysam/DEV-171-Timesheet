@@ -1,5 +1,46 @@
 # 171 Café Staff Timesheet
 
+## Version 3.4.1
+Released: 4 August 2026
+
+### Fixed
+- Removed the dependency on PostgreSQL `digest()` for Manager session tokens.
+- Reworked Manager sessions to use secure random tokens stored in the protected `manager_pin_sessions` table.
+- Qualified `pgcrypto` functions through Supabase’s `extensions` schema.
+- Retained eight-hour session expiry, sign-out, failed-attempt tracking and 15-minute lockouts.
+- Retained PIN login, PIN changes and individual Manager PINs.
+
+### Database
+- Use `database-update-v3.4.1.sql` instead of the Version 3.4.0 migration.
+- The script safely handles an incomplete Version 3.4.0 migration attempt.
+- Existing managers without a PIN receive temporary PIN **0000**.
+
+---
+
+## Version 3.4.0
+Released: 4 August 2026
+
+### Added
+- Added individual four-digit Manager PINs.
+- Added a phone-friendly Manager PIN keypad.
+- Added Staff/Manager role selection when creating a user.
+- Requires PIN and confirmation when creating a manager.
+- Added **Change Manager PIN** inside Manager Mode.
+- Added failed-attempt tracking and a 15-minute lockout after five incorrect attempts.
+- Added secure, expiring manager session tokens.
+
+### Changed
+- Replaced manager email/password entry in the app with PIN-only access.
+- Staff management changes now use protected Supabase database functions.
+- The Audit Log Viewer now reads through a protected manager function.
+- Existing managers receive temporary PIN **0000** during migration and should change it immediately.
+
+### Database
+- Run `database-update-v3.4.0.sql` in DEV before testing.
+- Run the same migration in Production only when deploying Version 3.4.0.
+
+---
+
 ## Version 3.3.0
 Released: 4 August 2026
 
@@ -252,7 +293,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.3.0**
+-   Current production version: **3.4.1**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

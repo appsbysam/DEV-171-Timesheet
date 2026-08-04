@@ -1,5 +1,29 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.4.1",
+    date: "4 August 2026",
+    changes: [
+      "Reworked manager session storage to avoid the unavailable digest function.",
+      "Manager sessions now use secure random session tokens stored directly in the protected session table.",
+      "Qualified pgcrypto functions through the Supabase extensions schema.",
+      "Retained individual Manager PINs, lockouts, PIN changes and expiring sessions.",
+      "Included a complete replacement database migration for Version 3.4.1."
+    ]
+  },
+  {
+    version: "3.4.0",
+    date: "4 August 2026",
+    changes: [
+      "Replaced manager email/password entry with an individual four-digit PIN.",
+      "Added a phone-friendly numeric PIN keypad.",
+      "Added secure server-side PIN verification, lockouts and expiring manager sessions.",
+      "Added Staff/Manager role selection when creating a user.",
+      "Managers require an individual PIN when created.",
+      "Added Change Manager PIN inside Manager Mode.",
+      "Updated staff management and audit viewing to use protected manager database functions."
+    ]
+  },
+  {
     version: "3.3.0",
     date: "4 August 2026",
     changes: [

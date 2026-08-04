@@ -439,6 +439,8 @@ let managerSessionToken =
     MANAGER_SESSION_STORAGE_KEY
   ) || "";
 
+let managerPinSubmitting = false;
+
 
 /* =====================================================
    USER IDENTITY FOUNDATION — v3.1.0
@@ -3079,7 +3081,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.5"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.6"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -4856,15 +4858,35 @@ function updateManagerPinDots() {
 }
 
 function setManagerPinValue(value) {
+  if (managerPinSubmitting) {
+    return;
+  }
+
   managerLoginPin.value =
     String(value)
       .replace(/\D/g, "")
       .slice(0, 4);
 
   updateManagerPinDots();
+
+  if (
+    managerLoginPin.value.length === 4 &&
+    !managerLoginSubmitBtn.disabled
+  ) {
+    window.setTimeout(() => {
+      if (
+        managerLoginPin.value.length === 4 &&
+        !managerPinSubmitting
+      ) {
+        managerLoginForm.requestSubmit();
+      }
+    }, 80);
+  }
 }
 
 function openManagerLogin() {
+  managerPinSubmitting = false;
+
   setManagerLoginMessage("");
   setManagerPinValue("");
 
@@ -5395,6 +5417,10 @@ managerLoginPin.addEventListener(
 managerPinKeypad.addEventListener(
   "click",
   (event) => {
+    if (managerPinSubmitting) {
+      return;
+    }
+
     const digitButton =
       event.target.closest(
         "[data-pin-digit]"
@@ -5448,8 +5474,14 @@ managerLoginForm.addEventListener(
     }
 
     try {
+      managerPinSubmitting = true;
+
       managerLoginSubmitBtn.disabled = true;
       managerLoginSubmitBtn.textContent = "Checking…";
+
+      managerPinKeypad.classList.add(
+        "is-disabled"
+      );
       setManagerLoginMessage("Checking PIN…");
 
       if (LOCAL_MODE) {
@@ -5528,9 +5560,15 @@ managerLoginForm.addEventListener(
 
       setManagerPinValue("");
     } finally {
+      managerPinSubmitting = false;
+
       managerLoginSubmitBtn.disabled = false;
       managerLoginSubmitBtn.textContent =
         "Unlock Manager Mode";
+
+      managerPinKeypad.classList.remove(
+        "is-disabled"
+      );
     }
   }
 );

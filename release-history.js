@@ -1,5 +1,17 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.4.6",
+    date: "4 August 2026",
+    changes: [
+      "Manager PIN login now submits automatically after the fourth digit.",
+      "The keypad is temporarily disabled while the PIN is being checked.",
+      "Extra keypad taps are ignored during validation.",
+      "Incorrect PIN attempts clear the PIN and allow a fresh attempt.",
+      "The Unlock Manager Mode button remains available as a fallback.",
+      "No database changes are required."
+    ]
+  },
+  {
     version: "3.4.5",
     date: "4 August 2026",
     changes: [

@@ -4163,3 +4163,13 @@ body.audit-log-modal-open {
   clip: rect(0 0 0 0) !important;
   white-space: nowrap !important;
 }
+
+
+/* =====================================================
+   MANAGER PIN AUTO-SUBMIT — v3.4.6
+   ===================================================== */
+
+.manager-pin-keypad.is-disabled {
+  pointer-events: none;
+  opacity: 0.68;
+}

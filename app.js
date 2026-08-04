@@ -242,6 +242,9 @@ const inactiveUserMessage =
 const checkUserAgainBtn =
   document.getElementById("checkUserAgainBtn");
 
+const inactiveManagerContinueBtn =
+  document.getElementById("inactiveManagerContinueBtn");
+
 let staffMembers = [];
 let saveTimer = null;
 let isLoading = false;
@@ -373,6 +376,7 @@ const DEVICE_TYPE_STORAGE_KEY =
 
 let resolvedAppUser = null;
 let identityResolution = null;
+let inactiveRestrictedMode = false;
 
 function createDeviceId() {
   if (
@@ -554,7 +558,7 @@ function showInactiveUser(member) {
   inactiveUserPanel.hidden = false;
 
   inactiveUserMessage.textContent =
-    `Hi ${member.name}. Your username is not yet active. Please ask your manager to activate it.`;
+    `Hi ${member.name}. Your username is not yet active. Please ask your manager to activate it. If you are a manager, you can continue and sign in to Manager Mode.`;
 }
 
 async function loadAllIdentityStaff() {
@@ -590,6 +594,44 @@ function findStoredMember(
   );
 }
 
+
+function applyInactiveRestrictedMode() {
+  document.body.classList.toggle(
+    "inactive-user-restricted",
+    inactiveRestrictedMode &&
+    !managerSignedIn
+  );
+
+  if (manageStaffBtn) {
+    manageStaffBtn.hidden = false;
+    manageStaffBtn.disabled = false;
+    manageStaffBtn.textContent =
+      managerSignedIn
+        ? "👤 Manager Mode"
+        : "🔐 Manager Mode";
+  }
+}
+
+function continueInactiveUserToManagerMode() {
+  inactiveRestrictedMode = true;
+  hideIdentityModal();
+
+  if (identityResolution) {
+    identityResolution(true);
+    identityResolution = null;
+  }
+
+  window.setTimeout(() => {
+    applyInactiveRestrictedMode();
+    openManagerLogin();
+  }, 100);
+}
+
+inactiveManagerContinueBtn.addEventListener(
+  "click",
+  continueInactiveUserToManagerMode
+);
+
 async function resolveStoredIdentity() {
   const storedIdentity =
     readStoredUserIdentity();
@@ -620,6 +662,7 @@ async function resolveStoredIdentity() {
       return null;
     }
 
+    inactiveRestrictedMode = false;
     hideIdentityModal();
     return true;
   } catch (error) {
@@ -714,6 +757,7 @@ async function submitUserIdentity(name) {
       "is-success"
     );
 
+    inactiveRestrictedMode = false;
     hideIdentityModal();
 
     if (identityResolution) {
@@ -815,11 +859,12 @@ checkUserAgainBtn.addEventListener(
 
       if (member.active === false) {
         inactiveUserMessage.textContent =
-          `Hi ${member.name}. Your username is still not active. Please ask your manager to activate it.`;
+          `Hi ${member.name}. Your username is still not active. Please ask your manager to activate it. If you are a manager, you can continue and sign in to Manager Mode.`;
 
         return;
       }
 
+      inactiveRestrictedMode = false;
       hideIdentityModal();
 
       if (identityResolution) {
@@ -1621,6 +1666,7 @@ function applyManagerControlState() {
   }
 
   updateClearButtonState();
+  applyInactiveRestrictedMode();
 }
 
 async function refreshManagerControlState() {
@@ -1720,7 +1766,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.1.0"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.1.1"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -3572,6 +3618,7 @@ managerLoginForm.addEventListener("submit", async (event) => {
 
     managerSignedIn = true;
     applyManagerControlState();
+    applyInactiveRestrictedMode();
 
     const actionToRun = pendingManagerAction;
     pendingManagerAction = null;
@@ -3597,6 +3644,7 @@ async function signOutManager() {
   if (LOCAL_MODE) {
     managerSignedIn = false;
     applyManagerControlState();
+    applyInactiveRestrictedMode();
     closeStaffModal();
     closeManagerMenu();
     return;
@@ -3938,6 +3986,7 @@ async function initialiseApp() {
   await refreshManagerControlState();
   await load();
   updateClearButtonState();
+  applyInactiveRestrictedMode();
 }
 
 if (!LOCAL_MODE) {

@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.1.1",
+    date: "4 August 2026",
+    changes: [
+      "Added a recovery path for inactive users who are managers.",
+      "Inactive staff details remain stored for the future audit log.",
+      "Inactive users can continue into a restricted app and sign in to Manager Mode.",
+      "Normal timesheet controls remain unavailable until manager authentication succeeds.",
+      "Signing out returns an inactive user to restricted mode."
+    ]
+  },
+  {
     version: "3.1.0",
     date: "4 August 2026",
     changes: [

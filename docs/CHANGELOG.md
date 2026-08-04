@@ -1,5 +1,19 @@
 # 171 Café Staff Timesheet
 
+## Version 3.1.1
+Released: 4 August 2026
+
+### Fixed
+- Removed the inactive-user dead end that prevented access to Manager Mode.
+- Inactive users are still identified and stored locally for future audit records.
+- Added **Continue to Manager Mode** for inactive users.
+- The app opens in a restricted state where normal timesheet controls are unavailable.
+- A manager can sign in and receive full Manager Mode access.
+- Signing out returns an inactive user to restricted mode.
+- Retained **Check Again** so activation can be detected without re-entering the name.
+
+---
+
 ## Version 3.1.0
 Released: 4 August 2026
 
@@ -155,7 +169,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.1.0**
+-   Current production version: **3.1.1**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

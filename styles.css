@@ -3298,3 +3298,65 @@ body.user-identity-modal-open {
     display: none !important;
   }
 }
+
+
+/* =====================================================
+   INACTIVE MANAGER ACCESS — v3.1.1
+   ===================================================== */
+
+.inactive-user-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 13px;
+}
+
+.inactive-manager-continue-btn {
+  width: 100%;
+  min-height: 47px;
+  border-color: #263f75;
+  border-radius: 10px;
+  background: #315a9a;
+  color: #fff;
+  cursor: pointer;
+}
+
+.inactive-manager-continue-btn:hover {
+  background: #274a82;
+}
+
+.inactive-user-actions .check-user-again-btn {
+  margin-top: 0;
+  border-color: #8b8f96;
+  background: #f1f2f4;
+  color: #333;
+}
+
+body.inactive-user-restricted .week-card,
+body.inactive-user-restricted .timesheet,
+body.inactive-user-restricted .summary-card,
+body.inactive-user-restricted .manager-card,
+body.inactive-user-restricted .status-indicator,
+body.inactive-user-restricted .toolbar > :not(.manage-staff-btn) {
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+
+body.inactive-user-restricted .manage-staff-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.inactive-user-restricted .toolbar {
+  grid-template-columns: 1fr;
+}
+
+body.inactive-user-restricted .toolbar .manage-staff-btn {
+  min-height: 46px;
+}
+
+@media (max-width: 460px) {
+  body.inactive-user-restricted .toolbar {
+    grid-template-columns: 1fr;
+  }
+}

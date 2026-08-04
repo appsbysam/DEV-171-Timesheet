@@ -1,5 +1,17 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.4.4",
+    date: "4 August 2026",
+    changes: [
+      "Added Active or Inactive selection when creating a new user.",
+      "New users default to Active.",
+      "Added visible feedback while a user is being added.",
+      "Added success and error feedback after user creation.",
+      "Added a Signing out status and disabled sign-out buttons during the operation.",
+      "Included the required Supabase function update."
+    ]
+  },
+  {
     version: "3.4.3",
     date: "4 August 2026",
     changes: [

@@ -4054,3 +4054,65 @@ body.audit-log-modal-open {
   border-color: #249c4b;
   background: #249c4b;
 }
+
+
+/* =====================================================
+   NEW USER STATUS & MANAGER FEEDBACK — v3.4.4
+   ===================================================== */
+
+.new-user-status {
+  display: flex;
+  gap: 14px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid #bbb;
+  border-radius: 9px;
+}
+
+.new-user-status legend {
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.new-user-status label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.new-user-status input {
+  width: auto;
+  margin: 0;
+}
+
+.manager-operation-status[hidden] {
+  display: none !important;
+}
+
+.manager-operation-status {
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border: 1px solid #b9c8cf;
+  border-radius: 9px;
+  background: #f3f7f9;
+  color: #315a72;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.manager-operation-status.is-success {
+  border-color: #a8d4b4;
+  background: #edf9f0;
+  color: #17652a;
+}
+
+.manager-operation-status.is-error {
+  border-color: #e0a5a5;
+  background: #fff0f0;
+  color: #9b1c1c;
+}

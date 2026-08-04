@@ -560,6 +560,14 @@
           </button>
         </div>
 
+        <div
+          id="managerOperationStatus"
+          class="manager-operation-status"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
+
         <div class="manager-menu-actions">
           <button id="managerMenuStaffBtn" type="button">
             👥 Manage Staff
@@ -962,6 +970,29 @@
                 value="manager"
               />
               Manager
+            </label>
+          </fieldset>
+
+          <fieldset class="new-user-status">
+            <legend>User status</legend>
+
+            <label>
+              <input
+                type="radio"
+                name="newStaffActive"
+                value="true"
+                checked
+              />
+              Active
+            </label>
+
+            <label>
+              <input
+                type="radio"
+                name="newStaffActive"
+                value="false"
+              />
+              Inactive
             </label>
           </fieldset>
 

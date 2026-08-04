@@ -223,6 +223,9 @@ const managerMenuSignOutBtn =
 const managerMenuChangePinBtn =
   document.getElementById("managerMenuChangePinBtn");
 
+const managerOperationStatus =
+  document.getElementById("managerOperationStatus");
+
 const changePinModal =
   document.getElementById("changePinModal");
 
@@ -2319,7 +2322,12 @@ const StaffStorage = {
     return allStaff.filter((member) => member.active !== false);
   },
 
-  async add(name, role = "staff", pin = "") {
+  async add(
+    name,
+    role = "staff",
+    pin = "",
+    active = true
+  ) {
     const cleanedName = name.trim();
     const cleanedRole =
       role === "manager"
@@ -2359,7 +2367,7 @@ const StaffStorage = {
             .toString(16)
             .slice(2)}`,
         name: cleanedName,
-        active: true,
+        active: Boolean(active),
         role: cleanedRole,
         display_order: nextOrder,
         created_at:
@@ -2389,7 +2397,9 @@ const StaffStorage = {
           p_pin:
             cleanedRole === "manager"
               ? pin
-              : null
+              : null,
+          p_active:
+            Boolean(active)
         }
       );
 
@@ -3066,7 +3076,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.3"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.4"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -4711,6 +4721,32 @@ function createStaffManagerRow(member, index) {
   return row;
 }
 
+function showManagerOperationStatus(
+  message,
+  state = "working",
+  autoHideMs = 0
+) {
+  if (!managerOperationStatus) {
+    return;
+  }
+
+  managerOperationStatus.hidden = false;
+  managerOperationStatus.textContent = message;
+  managerOperationStatus.className =
+    `manager-operation-status is-${state}`;
+
+  if (autoHideMs > 0) {
+    window.setTimeout(() => {
+      if (
+        managerOperationStatus.textContent ===
+        message
+      ) {
+        managerOperationStatus.hidden = true;
+      }
+    }, autoHideMs);
+  }
+}
+
 function setManagerLoginMessage(
   message,
   isError = false
@@ -5401,6 +5437,19 @@ managerLoginForm.addEventListener(
 );
 
 async function signOutManager() {
+  showManagerOperationStatus(
+    "Signing out...",
+    "working"
+  );
+
+  if (managerSignOutBtn) {
+    managerSignOutBtn.disabled = true;
+  }
+
+  if (managerMenuSignOutBtn) {
+    managerMenuSignOutBtn.disabled = true;
+  }
+
   try {
     if (!LOCAL_MODE && managerSessionToken) {
       await db.rpc(
@@ -5428,9 +5477,23 @@ async function signOutManager() {
   applyManagerControlState();
   applyInactiveRestrictedMode();
 
+  showManagerOperationStatus(
+    "Signed out",
+    "success",
+    1200
+  );
+
   closeStaffModal();
   closeManagerMenu();
   closeChangePinModal();
+
+  if (managerSignOutBtn) {
+    managerSignOutBtn.disabled = false;
+  }
+
+  if (managerMenuSignOutBtn) {
+    managerMenuSignOutBtn.disabled = false;
+  }
 }
 
 managerSignOutBtn.addEventListener(
@@ -5526,6 +5589,11 @@ addStaffForm.addEventListener(
         'input[name="newStaffRole"]:checked'
       )?.value || "staff";
 
+    const active =
+      addStaffForm.querySelector(
+        'input[name="newStaffActive"]:checked'
+      )?.value !== "false";
+
     const pin =
       newStaffPin.value;
 
@@ -5561,12 +5629,17 @@ addStaffForm.addEventListener(
         'button[type="submit"]'
       );
 
+    showManagerOperationStatus(
+      `Adding ${name}...`,
+      "working"
+    );
+
     const result =
       await runStaffOperation({
         busyMessage:
           `Adding ${name}…`,
         successMessage:
-          `${name} added as ${role}`,
+          `${name} added as ${role} (${active ? "active" : "inactive"})`,
         button:
           addButton,
         busyText:
@@ -5576,11 +5649,18 @@ addStaffForm.addEventListener(
             StaffStorage.add(
               name,
               role,
-              pin
+              pin,
+              active
             )
       });
 
     if (result) {
+      showManagerOperationStatus(
+        `${name} added successfully`,
+        "success",
+        2200
+      );
+
       addStaffForm.reset();
 
       newManagerPinFields.hidden =
@@ -5590,6 +5670,12 @@ addStaffForm.addEventListener(
       newStaffPinConfirm.required = false;
 
       newStaffName.focus();
+    } else {
+      showManagerOperationStatus(
+        `Unable to add ${name}`,
+        "error",
+        3000
+      );
     }
   }
 );

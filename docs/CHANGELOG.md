@@ -1,5 +1,22 @@
 # 171 Café Staff Timesheet
 
+## Version 3.4.4
+Released: 4 August 2026
+
+### Added
+- Added **Active** and **Inactive** options when creating a user.
+- New users default to **Active**.
+- Added visible feedback while user creation is running.
+- Added success and error feedback after user creation.
+- Added a visible **Signing out...** status.
+- Sign-out buttons are disabled while sign-out is processing.
+
+### Database
+- Run `database-update-v3.4.4.sql` in DEV before testing.
+- Run the same migration in Production when deploying Version 3.4.4.
+
+---
+
 ## Version 3.4.3
 Released: 4 August 2026
 
@@ -319,7 +336,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.4.3**
+-   Current production version: **3.4.4**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

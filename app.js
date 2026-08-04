@@ -1274,6 +1274,11 @@ async function flushPendingAudit() {
     action_type:
       "Updated timesheet",
 
+    performed_role:
+      managerSignedIn
+        ? "Manager"
+        : "Staff",
+
     week_start:
       pendingAuditWeek,
 
@@ -1369,6 +1374,11 @@ async function logImmediateAudit({
 
       action_type:
         actionType,
+
+      performed_role:
+        managerSignedIn
+          ? "Manager"
+          : "Staff",
 
       week_start:
         week,
@@ -2270,7 +2280,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.2.0"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.2.1"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 

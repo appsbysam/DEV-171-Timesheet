@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.2.1",
+    date: "4 August 2026",
+    changes: [
+      "Added the role used when performing each audited action.",
+      "Audit entries now record Staff or Manager in performed_role.",
+      "Manager corrections can now be distinguished from ordinary staff updates.",
+      "Grouped-event detail fields remain NULL when multiple staff, days or fields are included."
+    ]
+  },
+  {
     version: "3.2.0",
     date: "4 August 2026",
     changes: [

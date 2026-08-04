@@ -1,5 +1,23 @@
 # 171 Café Staff Timesheet
 
+## Version 3.2.1
+Released: 4 August 2026
+
+### Added
+- Added `performed_role` to each audit record.
+- Records **Manager** when the action occurs during an authenticated Manager Mode session.
+- Records **Staff** for ordinary timesheet activity.
+- Makes manager corrections distinguishable from changes made by regular staff.
+
+### Clarified
+- `employee_name`, `day_name`, `field_name`, `old_value`, and `new_value` remain blank for grouped audit events containing multiple changes.
+- The complete grouped summary continues to be stored in `details`.
+
+### Database
+Run the supplied `database-update-v3.2.1.sql` once in the DEV Supabase SQL Editor before testing this version.
+
+---
+
 ## Version 3.2.0
 Released: 4 August 2026
 
@@ -198,7 +216,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.2.0**
+-   Current production version: **3.2.1**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

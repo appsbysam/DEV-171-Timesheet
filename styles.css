@@ -4116,3 +4116,50 @@ body.audit-log-modal-open {
   background: #fff0f0;
   color: #9b1c1c;
 }
+
+
+/* =====================================================
+   MANAGER PIN LIVE STATUS BAR — v3.4.5
+   ===================================================== */
+
+.manager-pin-user {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.manager-pin-user.is-ready {
+  background: #f3f5f7;
+  color: #444;
+}
+
+.manager-pin-user.is-checking {
+  background: #eaf2fb;
+  color: #285d91;
+}
+
+.manager-pin-user.is-error {
+  background: #fff0f0;
+  color: #a61d24;
+}
+
+.manager-pin-user.is-locked {
+  background: #fff4df;
+  color: #8a5700;
+}
+
+.manager-pin-user.is-success {
+  background: #edf9f0;
+  color: #17652a;
+}
+
+.manager-login-message-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+}

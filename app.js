@@ -265,6 +265,9 @@ const managerLoginPin =
 const managerPinUserName =
   document.getElementById("managerPinUserName");
 
+const managerPinStatusBar =
+  document.getElementById("managerPinStatusBar");
+
 const managerPinKeypad =
   document.getElementById("managerPinKeypad");
 
@@ -3076,7 +3079,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.4"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.5"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -4747,6 +4750,17 @@ function showManagerOperationStatus(
   }
 }
 
+function setManagerPinStatus(
+  message,
+  state = "ready"
+) {
+  managerPinStatusBar.className =
+    `manager-pin-user is-${state}`;
+
+  managerPinStatusBar.textContent =
+    message;
+}
+
 function setManagerLoginMessage(
   message,
   isError = false
@@ -4757,6 +4771,69 @@ function setManagerLoginMessage(
   managerLoginMessage.classList.toggle(
     "error",
     isError
+  );
+
+  if (!message) {
+    const name =
+      resolvedAppUser?.name ||
+      localStorage.getItem(
+        USER_NAME_STORAGE_KEY
+      ) ||
+      "Manager";
+
+    managerPinStatusBar.className =
+      "manager-pin-user is-ready";
+
+    managerPinStatusBar.innerHTML =
+      `Signing in as <strong>${name}</strong>`;
+
+    return;
+  }
+
+  const normalised =
+    String(message).toLowerCase();
+
+  if (
+    normalised.includes(
+      "checking"
+    )
+  ) {
+    setManagerPinStatus(
+      "Checking PIN...",
+      "checking"
+    );
+
+    return;
+  }
+
+  if (
+    isError &&
+    normalised.includes(
+      "locked"
+    )
+  ) {
+    setManagerPinStatus(
+      message,
+      "locked"
+    );
+
+    return;
+  }
+
+  if (isError) {
+    setManagerPinStatus(
+      message === "Incorrect PIN."
+        ? "Incorrect PIN. Please try again."
+        : message,
+      "error"
+    );
+
+    return;
+  }
+
+  setManagerPinStatus(
+    message,
+    "success"
   );
 }
 
@@ -4791,12 +4868,21 @@ function openManagerLogin() {
   setManagerLoginMessage("");
   setManagerPinValue("");
 
-  managerPinUserName.textContent =
+  const managerName =
     resolvedAppUser?.name ||
     localStorage.getItem(
       USER_NAME_STORAGE_KEY
     ) ||
     "Manager";
+
+  managerPinUserName.textContent =
+    managerName;
+
+  managerPinStatusBar.className =
+    "manager-pin-user is-ready";
+
+  managerPinStatusBar.innerHTML =
+    `Signing in as <strong>${managerName}</strong>`;
 
   managerLoginModal.hidden = false;
 
@@ -5400,6 +5486,19 @@ managerLoginForm.addEventListener(
       sessionStorage.setItem(
         MANAGER_SESSION_STORAGE_KEY,
         managerSessionToken
+      );
+
+      setManagerPinStatus(
+        `Welcome ${resolvedAppUser.name}`,
+        "success"
+      );
+
+      await new Promise(
+        (resolve) =>
+          window.setTimeout(
+            resolve,
+            450
+          )
       );
 
       closeManagerLogin();

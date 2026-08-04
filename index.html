@@ -742,7 +742,12 @@
         </div>
 
         <form id="managerLoginForm" class="manager-login-form manager-pin-form">
-          <p class="manager-pin-user">
+          <p
+            id="managerPinStatusBar"
+            class="manager-pin-user is-ready"
+            role="status"
+            aria-live="polite"
+          >
             Signing in as
             <strong id="managerPinUserName">Manager</strong>
           </p>
@@ -797,7 +802,7 @@
 
         <p
           id="managerLoginMessage"
-          class="manager-login-message"
+          class="manager-login-message manager-login-message-hidden"
           aria-live="polite"
         ></p>
       </section>

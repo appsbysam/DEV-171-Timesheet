@@ -1,5 +1,22 @@
 # 171 Café Staff Timesheet
 
+## Version 3.4.5
+Released: 4 August 2026
+
+### Improved
+- Moved Manager PIN feedback into the existing **Signing in as** status bar.
+- Incorrect PIN messages now appear prominently in red.
+- **Checking PIN...** appears in blue while validation is running.
+- Manager lockout messages appear in orange.
+- Successful login briefly displays **Welcome [name]** in green.
+- Removed the visible lower PIN error message area.
+- Added subtle transitions between status states.
+
+### Database
+- No Supabase database changes are required.
+
+---
+
 ## Version 3.4.4
 Released: 4 August 2026
 
@@ -336,7 +353,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.4.4**
+-   Current production version: **3.4.5**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

@@ -1,5 +1,18 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.4.5",
+    date: "4 August 2026",
+    changes: [
+      "Moved all Manager PIN feedback into the existing signing-in status bar.",
+      "Incorrect PIN messages now appear prominently in red.",
+      "Checking PIN uses a blue status state.",
+      "Lockout messages use an orange warning state.",
+      "Successful login briefly shows Welcome before opening Manager Mode.",
+      "Removed the visible lower error message area.",
+      "No database changes are required."
+    ]
+  },
+  {
     version: "3.4.4",
     date: "4 August 2026",
     changes: [

@@ -1,5 +1,17 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.3.0",
+    date: "4 August 2026",
+    changes: [
+      "Added a manager-only Audit Log Viewer.",
+      "Displays newest audit records first in readable mobile-friendly cards.",
+      "Added action, user and date-range filters.",
+      "Added Staff and Manager role badges.",
+      "Device ID, device type, environment and record ID are hidden under expandable details.",
+      "Added paginated Load More support, loading states, empty states and error handling."
+    ]
+  },
+  {
     version: "3.2.2",
     date: "4 August 2026",
     changes: [

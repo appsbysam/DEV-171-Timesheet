@@ -1,5 +1,25 @@
 # 171 Café Staff Timesheet
 
+## Version 3.3.0
+Released: 4 August 2026
+
+### Added
+- Added a manager-only **Audit Log** option to Manager Mode.
+- Displays audit events newest first using mobile-friendly cards.
+- Shows action, changed-by name, Staff/Manager role, timestamp, week and readable change details.
+- Keeps device ID, device type, environment and record ID hidden under **Show Device Details**.
+- Added filters for action, user and period.
+- Added **This week**, **Last 30 days** and **All time** period options.
+- Added paginated **Load More** support.
+- Added loading, empty and error states.
+
+### Security
+- The Audit Log Viewer requires an authenticated Manager Mode session.
+- Existing Supabase RLS policies remain in effect.
+- No database changes are required for this release.
+
+---
+
 ## Version 3.2.2
 Released: 4 August 2026
 
@@ -232,7 +252,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.2.2**
+-   Current production version: **3.3.0**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

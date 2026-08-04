@@ -160,6 +160,33 @@ const managerMenuCopyPreviousBtn =
 const managerMenuGenerateRosterBtn =
   document.getElementById("managerMenuGenerateRosterBtn");
 
+const managerMenuAuditBtn =
+  document.getElementById("managerMenuAuditBtn");
+
+const auditLogModal =
+  document.getElementById("auditLogModal");
+
+const closeAuditLogBtn =
+  document.getElementById("closeAuditLogBtn");
+
+const auditActionFilter =
+  document.getElementById("auditActionFilter");
+
+const auditUserFilter =
+  document.getElementById("auditUserFilter");
+
+const auditPeriodFilter =
+  document.getElementById("auditPeriodFilter");
+
+const auditLogStatus =
+  document.getElementById("auditLogStatus");
+
+const auditLogList =
+  document.getElementById("auditLogList");
+
+const auditLoadMoreBtn =
+  document.getElementById("auditLoadMoreBtn");
+
 const rosterModal =
   document.getElementById("rosterModal");
 
@@ -1070,8 +1097,627 @@ const AuditStorage = {
     if (error) {
       throw error;
     }
+  },
+
+  async list({
+    actionType = "",
+    changedBy = "",
+    period = "week",
+    offset = 0,
+    limit = 20
+  } = {}) {
+    if (LOCAL_MODE) {
+      const records =
+        JSON.parse(
+          localStorage.getItem(
+            "171-timesheet-local-audit-log"
+          ) || "[]"
+        );
+
+      const cutoff =
+        getAuditPeriodCutoff(period);
+
+      const filtered =
+        records
+          .filter((entry) => {
+            if (
+              actionType &&
+              entry.action_type !== actionType
+            ) {
+              return false;
+            }
+
+            if (
+              changedBy &&
+              entry.changed_by_name !== changedBy
+            ) {
+              return false;
+            }
+
+            if (
+              cutoff &&
+              new Date(entry.created_at) < cutoff
+            ) {
+              return false;
+            }
+
+            return true;
+          })
+          .sort(
+            (a, b) =>
+              new Date(b.created_at) -
+              new Date(a.created_at)
+          );
+
+      return filtered.slice(
+        offset,
+        offset + limit
+      );
+    }
+
+    let query =
+      db
+        .from("audit_log")
+        .select(
+          [
+            "id",
+            "created_at",
+            "changed_by_staff_id",
+            "changed_by_name",
+            "device_id",
+            "device_type",
+            "action_type",
+            "performed_role",
+            "week_start",
+            "employee_name",
+            "day_name",
+            "field_name",
+            "old_value",
+            "new_value",
+            "details",
+            "environment"
+          ].join(",")
+        )
+        .order(
+          "created_at",
+          { ascending: false }
+        )
+        .range(
+          offset,
+          offset + limit - 1
+        );
+
+    if (actionType) {
+      query =
+        query.eq(
+          "action_type",
+          actionType
+        );
+    }
+
+    if (changedBy) {
+      query =
+        query.eq(
+          "changed_by_name",
+          changedBy
+        );
+    }
+
+    const cutoff =
+      getAuditPeriodCutoff(period);
+
+    if (cutoff) {
+      query =
+        query.gte(
+          "created_at",
+          cutoff.toISOString()
+        );
+    }
+
+    const { data, error } =
+      await query;
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
   }
 };
+
+
+const AUDIT_PAGE_SIZE = 20;
+
+let auditLogOffset = 0;
+let auditLogHasMore = false;
+let auditLogLoading = false;
+
+function getAuditPeriodCutoff(period) {
+  if (period === "all") {
+    return null;
+  }
+
+  const now = new Date();
+
+  if (period === "30days") {
+    const cutoff = new Date(now);
+    cutoff.setDate(
+      cutoff.getDate() - 30
+    );
+    return cutoff;
+  }
+
+  const cutoff = new Date(now);
+  const day = cutoff.getDay();
+  const daysSinceMonday =
+    day === 0 ? 6 : day - 1;
+
+  cutoff.setDate(
+    cutoff.getDate() -
+    daysSinceMonday
+  );
+
+  cutoff.setHours(0, 0, 0, 0);
+
+  return cutoff;
+}
+
+function formatAuditDateTime(value) {
+  if (!value) {
+    return "Unknown time";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-AU",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    }
+  ).format(date);
+}
+
+function formatAuditWeek(value) {
+  if (!value) {
+    return "";
+  }
+
+  return formatDateForMessage(value);
+}
+
+function escapeAuditText(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function auditActionLabel(actionType) {
+  const labels = {
+    "Updated timesheet":
+      "Updated Timesheet",
+    "Cleared week":
+      "Cleared Week",
+    "Copied previous week":
+      "Copied Previous Week"
+  };
+
+  return labels[actionType] ||
+    actionType ||
+    "Audit Event";
+}
+
+function buildAuditSummary(entry) {
+  if (entry.details) {
+    return String(entry.details)
+      .split("\n")
+      .filter(Boolean);
+  }
+
+  if (
+    entry.day_name ||
+    entry.employee_name ||
+    entry.field_name
+  ) {
+    const oldDisplay =
+      entry.old_value
+        ? formatAuditTime(entry.old_value)
+        : "blank";
+
+    const newDisplay =
+      entry.new_value
+        ? formatAuditTime(entry.new_value)
+        : "blank";
+
+    return [
+      [
+        entry.day_name,
+        entry.employee_name,
+        entry.field_name
+      ]
+        .filter(Boolean)
+        .join(" — ") +
+      `: ${oldDisplay} → ${newDisplay}`
+    ];
+  }
+
+  return [
+    "No additional change details were recorded."
+  ];
+}
+
+function createAuditCard(entry) {
+  const card =
+    document.createElement("article");
+
+  card.className =
+    "audit-entry-card";
+
+  const role =
+    entry.performed_role === "Manager"
+      ? "Manager"
+      : "Staff";
+
+  const roleClass =
+    role === "Manager"
+      ? "is-manager"
+      : "is-staff";
+
+  const summaryLines =
+    buildAuditSummary(entry);
+
+  const summaryHtml =
+    summaryLines
+      .map(
+        (line) =>
+          `<div class="audit-change-line">${escapeAuditText(line)}</div>`
+      )
+      .join("");
+
+  const weekHtml =
+    entry.week_start
+      ? `
+        <div class="audit-entry-week">
+          <span>Week</span>
+          <strong>${escapeAuditText(
+            formatAuditWeek(
+              entry.week_start
+            )
+          )}</strong>
+        </div>
+      `
+      : "";
+
+  card.innerHTML = `
+    <div class="audit-entry-top">
+      <div>
+        <h3>${escapeAuditText(
+          auditActionLabel(
+            entry.action_type
+          )
+        )}</h3>
+
+        <div class="audit-entry-person">
+          <span>👤 ${escapeAuditText(
+            entry.changed_by_name ||
+            "Unknown user"
+          )}</span>
+
+          <span class="audit-role-badge ${roleClass}">
+            ${escapeAuditText(role)}
+          </span>
+        </div>
+      </div>
+
+      <time datetime="${escapeAuditText(
+        entry.created_at || ""
+      )}">
+        ${escapeAuditText(
+          formatAuditDateTime(
+            entry.created_at
+          )
+        )}
+      </time>
+    </div>
+
+    ${weekHtml}
+
+    <div class="audit-entry-changes">
+      ${summaryHtml}
+    </div>
+
+    <details class="audit-device-details">
+      <summary>Show Device Details</summary>
+
+      <dl>
+        <div>
+          <dt>Device ID</dt>
+          <dd>${escapeAuditText(
+            entry.device_id ||
+            "Not recorded"
+          )}</dd>
+        </div>
+
+        <div>
+          <dt>Device</dt>
+          <dd>${escapeAuditText(
+            entry.device_type ||
+            "Not recorded"
+          )}</dd>
+        </div>
+
+        <div>
+          <dt>Environment</dt>
+          <dd>${escapeAuditText(
+            entry.environment ||
+            "Not recorded"
+          )}</dd>
+        </div>
+
+        <div>
+          <dt>Record ID</dt>
+          <dd>${escapeAuditText(
+            entry.id ||
+            "Not recorded"
+          )}</dd>
+        </div>
+      </dl>
+    </details>
+  `;
+
+  const details =
+    card.querySelector(
+      ".audit-device-details"
+    );
+
+  const summary =
+    details.querySelector("summary");
+
+  details.addEventListener(
+    "toggle",
+    () => {
+      summary.textContent =
+        details.open
+          ? "Hide Device Details"
+          : "Show Device Details";
+    }
+  );
+
+  return card;
+}
+
+function setAuditLogStatus(
+  message,
+  state = "ready"
+) {
+  auditLogStatus.textContent = message;
+  auditLogStatus.className =
+    `audit-log-status is-${state}`;
+}
+
+async function populateAuditUserFilter() {
+  const selected =
+    auditUserFilter.value;
+
+  try {
+    const allStaff =
+      await StaffStorage.loadAll();
+
+    const names =
+      [...new Set(
+        allStaff
+          .map(
+            (member) =>
+              String(member.name || "")
+                .trim()
+          )
+          .filter(Boolean)
+      )]
+        .sort(
+          (a, b) =>
+            a.localeCompare(b)
+        );
+
+    auditUserFilter.innerHTML =
+      '<option value="">All users</option>';
+
+    names.forEach((name) => {
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value = name;
+      option.textContent = name;
+
+      auditUserFilter.appendChild(
+        option
+      );
+    });
+
+    auditUserFilter.value =
+      names.includes(selected)
+        ? selected
+        : "";
+  } catch (error) {
+    console.warn(
+      "Unable to populate audit users:",
+      error
+    );
+  }
+}
+
+async function loadAuditLog({
+  reset = false
+} = {}) {
+  if (auditLogLoading) {
+    return;
+  }
+
+  auditLogLoading = true;
+
+  if (reset) {
+    auditLogOffset = 0;
+    auditLogList.innerHTML = "";
+    auditLoadMoreBtn.hidden = true;
+
+    setAuditLogStatus(
+      "Loading audit records…",
+      "loading"
+    );
+  } else {
+    auditLoadMoreBtn.disabled = true;
+    auditLoadMoreBtn.textContent =
+      "Loading…";
+  }
+
+  try {
+    const rows =
+      await AuditStorage.list({
+        actionType:
+          auditActionFilter.value,
+
+        changedBy:
+          auditUserFilter.value,
+
+        period:
+          auditPeriodFilter.value,
+
+        offset:
+          auditLogOffset,
+
+        limit:
+          AUDIT_PAGE_SIZE + 1
+      });
+
+    const visibleRows =
+      rows.slice(
+        0,
+        AUDIT_PAGE_SIZE
+      );
+
+    auditLogHasMore =
+      rows.length >
+      AUDIT_PAGE_SIZE;
+
+    visibleRows.forEach((entry) => {
+      auditLogList.appendChild(
+        createAuditCard(entry)
+      );
+    });
+
+    auditLogOffset +=
+      visibleRows.length;
+
+    auditLoadMoreBtn.hidden =
+      !auditLogHasMore;
+
+    auditLoadMoreBtn.disabled =
+      false;
+
+    auditLoadMoreBtn.textContent =
+      "Load More";
+
+    if (
+      !auditLogList.children.length
+    ) {
+      auditLogList.innerHTML = `
+        <div class="audit-log-empty">
+          No audit records match the selected filters.
+        </div>
+      `;
+    }
+
+    setAuditLogStatus(
+      `${auditLogOffset} record${
+        auditLogOffset === 1 ? "" : "s"
+      } shown`,
+      "ready"
+    );
+  } catch (error) {
+    console.error(
+      "Unable to load audit log:",
+      error
+    );
+
+    if (
+      !auditLogList.children.length
+    ) {
+      auditLogList.innerHTML = `
+        <div class="audit-log-error">
+          Unable to load the audit log.
+          Please check your connection and try again.
+        </div>
+      `;
+    }
+
+    setAuditLogStatus(
+      `Unable to load audit log: ${error.message}`,
+      "error"
+    );
+  } finally {
+    auditLogLoading = false;
+  }
+}
+
+async function openAuditLog() {
+  try {
+    const allowed =
+      await requireManagerSession();
+
+    if (!allowed) {
+      return;
+    }
+
+    closeManagerMenu();
+
+    auditLogModal.hidden = false;
+
+    document.body.classList.add(
+      "audit-log-modal-open"
+    );
+
+    await flushPendingAudit();
+    await populateAuditUserFilter();
+    await loadAuditLog({
+      reset: true
+    });
+  } catch (error) {
+    console.error(error);
+
+    openManagerLogin();
+
+    setManagerLoginMessage(
+      error.message,
+      true
+    );
+  }
+}
+
+function closeAuditLog() {
+  auditLogModal.hidden = true;
+
+  document.body.classList.remove(
+    "audit-log-modal-open"
+  );
+}
+
+function resetAndLoadAuditLog() {
+  loadAuditLog({
+    reset: true
+  });
+}
 
 function normaliseAuditValue(value) {
   return value == null
@@ -2357,7 +3003,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.2.2"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.3.0"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -4120,7 +4766,11 @@ function closeManagerMenu() {
 
   managerMenuModal.hidden = true;
 
-  if (staffModal.hidden && managerLoginModal.hidden) {
+  if (
+    staffModal.hidden &&
+    managerLoginModal.hidden &&
+    auditLogModal.hidden
+  ) {
     document.body.classList.remove("staff-modal-open");
   }
 }
@@ -4159,6 +4809,49 @@ managerMenuStaffBtn.addEventListener("click", async () => {
   closeManagerMenu();
   await showStaffModal();
 });
+
+managerMenuAuditBtn.addEventListener(
+  "click",
+  openAuditLog
+);
+
+closeAuditLogBtn.addEventListener(
+  "click",
+  closeAuditLog
+);
+
+auditLogModal
+  .querySelectorAll(
+    "[data-close-audit-log]"
+  )
+  .forEach((element) => {
+    element.addEventListener(
+      "click",
+      closeAuditLog
+    );
+  });
+
+auditActionFilter.addEventListener(
+  "change",
+  resetAndLoadAuditLog
+);
+
+auditUserFilter.addEventListener(
+  "change",
+  resetAndLoadAuditLog
+);
+
+auditPeriodFilter.addEventListener(
+  "change",
+  resetAndLoadAuditLog
+);
+
+auditLoadMoreBtn.addEventListener(
+  "click",
+  () => {
+    loadAuditLog();
+  }
+);
 
 managerMenuCopyPreviousBtn.addEventListener(
   "click",

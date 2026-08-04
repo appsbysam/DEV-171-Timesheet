@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.4.2",
+    date: "4 August 2026",
+    changes: [
+      "Fixed desktop Manager PIN entry adding two digits for every keypad press.",
+      "Removed a duplicated PIN keypad event listener.",
+      "Kept mobile PIN behaviour unchanged.",
+      "No database changes are required."
+    ]
+  },
+  {
     version: "3.4.1",
     date: "4 August 2026",
     changes: [

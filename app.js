@@ -3066,7 +3066,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.1"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.4.2"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -5263,56 +5263,6 @@ managerLoginModal
       closeManagerLogin();
     });
   });
-
-managerLoginPin.addEventListener(
-  "input",
-  () => {
-    setManagerPinValue(
-      managerLoginPin.value
-    );
-  }
-);
-
-managerPinKeypad.addEventListener(
-  "click",
-  (event) => {
-    const digitButton =
-      event.target.closest(
-        "[data-pin-digit]"
-      );
-
-    if (digitButton) {
-      setManagerPinValue(
-        managerLoginPin.value +
-        digitButton.dataset.pinDigit
-      );
-
-      return;
-    }
-
-    if (
-      event.target.closest(
-        "[data-pin-clear]"
-      )
-    ) {
-      setManagerPinValue("");
-      return;
-    }
-
-    if (
-      event.target.closest(
-        "[data-pin-backspace]"
-      )
-    ) {
-      setManagerPinValue(
-        managerLoginPin.value.slice(
-          0,
-          -1
-        )
-      );
-    }
-  }
-);
 
 managerLoginPin.addEventListener(
   "input",

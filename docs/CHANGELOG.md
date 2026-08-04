@@ -1,5 +1,18 @@
 # 171 Café Staff Timesheet
 
+## Version 3.4.2
+Released: 4 August 2026
+
+### Fixed
+- Fixed the desktop Manager PIN keypad entering two digits from one button press.
+- Removed a duplicated PIN keypad event listener from `app.js`.
+- Mobile PIN entry remains unchanged.
+
+### Database
+- No database changes are required.
+
+---
+
 ## Version 3.4.1
 Released: 4 August 2026
 
@@ -293,7 +306,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.4.1**
+-   Current production version: **3.4.2**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

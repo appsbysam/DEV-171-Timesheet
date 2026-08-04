@@ -1,5 +1,20 @@
 # 171 Café Staff Timesheet
 
+## Version 3.5.2
+Released: 4 August 2026
+
+### Fixed
+- Fixed the **data is not defined** error during User PIN login.
+- Stored the Supabase PIN response in the correct function scope.
+- Restored temporary-PIN detection and mandatory PIN-change routing.
+- Updated local-mode login to use the same result structure.
+
+### Database
+- No Supabase database changes are required.
+- Keep the Version 3.5.1 database migration already applied.
+
+---
+
 ## Version 3.5.1
 Released: 4 August 2026
 
@@ -418,7 +433,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.5.1**
+-   Current production version: **3.5.2**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

@@ -1,5 +1,16 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.5.2",
+    date: "4 August 2026",
+    changes: [
+      "Fixed the User PIN login error: data is not defined.",
+      "The Supabase PIN response is now stored in the correct scope.",
+      "Temporary-PIN change detection now works after successful login.",
+      "Local-mode PIN login uses the same result structure.",
+      "No database changes are required."
+    ]
+  },
+  {
     version: "3.5.1",
     date: "4 August 2026",
     changes: [

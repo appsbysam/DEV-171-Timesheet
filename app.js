@@ -3124,7 +3124,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.5.1"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.5.2"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -5658,6 +5658,8 @@ managerLoginForm.addEventListener(
     }
 
     try {
+      let loginResult = null;
+
       managerPinSubmitting = true;
 
       managerLoginSubmitBtn.disabled = true;
@@ -5674,6 +5676,12 @@ managerLoginForm.addEventListener(
         }
 
         managerSessionToken = "local-manager-session";
+
+        loginResult = {
+          success: true,
+          token: managerSessionToken,
+          must_change: false
+        };
       } else {
         const { data, error } = await db.rpc(
           "user_login_with_pin",
@@ -5689,14 +5697,17 @@ managerLoginForm.addEventListener(
           throw error;
         }
 
-        if (!data?.success) {
+        loginResult = data;
+
+        if (!loginResult?.success) {
           throw new Error(
-            data?.message ||
-            "Unable to unlock Manager Mode."
+            loginResult?.message ||
+            "Unable to continue."
           );
         }
 
-        managerSessionToken = data.token;
+        managerSessionToken =
+          loginResult.token;
       }
 
       sessionStorage.setItem(
@@ -5705,7 +5716,9 @@ managerLoginForm.addEventListener(
       );
 
       pinMustChangeAfterLogin =
-        Boolean(data?.must_change);
+        Boolean(
+          loginResult?.must_change
+        );
 
       setManagerPinStatus(
         `Welcome ${resolvedAppUser.name}`,

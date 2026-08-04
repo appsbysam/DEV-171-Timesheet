@@ -378,6 +378,14 @@ let resolvedAppUser = null;
 let identityResolution = null;
 let inactiveRestrictedMode = false;
 
+let lastSavedAuditSnapshot = new Map();
+let pendingAuditChanges = new Map();
+let pendingAuditWeek = "";
+let auditFlushTimer = null;
+
+const AUDIT_FLUSH_DELAY_MS =
+  60 * 1000;
+
 function createDeviceId() {
   if (
     window.crypto &&
@@ -941,6 +949,463 @@ function sortStaffMembers(staff) {
   });
 }
 
+
+/* =====================================================
+   AUDIT LOG — v3.2.0
+   ===================================================== */
+
+const AuditStorage = {
+  async insert(entry) {
+    if (LOCAL_MODE) {
+      const key =
+        "171-timesheet-local-audit-log";
+
+      const existing =
+        JSON.parse(
+          localStorage.getItem(key) ||
+          "[]"
+        );
+
+      existing.push({
+        id:
+          typeof crypto?.randomUUID ===
+          "function"
+            ? crypto.randomUUID()
+            : String(Date.now()),
+
+        created_at:
+          new Date().toISOString(),
+
+        ...entry
+      });
+
+      localStorage.setItem(
+        key,
+        JSON.stringify(existing)
+      );
+
+      return;
+    }
+
+    const { error } =
+      await db
+        .from("audit_log")
+        .insert(entry);
+
+    if (error) {
+      throw error;
+    }
+  }
+};
+
+function normaliseAuditValue(value) {
+  return value == null
+    ? ""
+    : String(value);
+}
+
+function formatAuditTime(value) {
+  if (!value) {
+    return "blank";
+  }
+
+  const [hours, minutes] =
+    String(value)
+      .split(":")
+      .map(Number);
+
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes)
+  ) {
+    return String(value);
+  }
+
+  const suffix =
+    hours >= 12 ? "pm" : "am";
+
+  const displayHour =
+    hours % 12 || 12;
+
+  return `${displayHour}:${String(
+    minutes
+  ).padStart(2, "0")} ${suffix}`;
+}
+
+function buildAuditSnapshot(rows) {
+  const snapshot = new Map();
+
+  let metadata = {};
+
+  try {
+    metadata =
+      JSON.parse(
+        rows[0]?.notes || "{}"
+      );
+  } catch {
+    metadata = {};
+  }
+
+  const splitShifts =
+    metadata.splitShifts || {};
+
+  rows.forEach((row) => {
+    const baseKey =
+      `${row.employee}::${row.day}`;
+
+    const split =
+      splitShifts[baseKey] || {};
+
+    snapshot.set(
+      `${baseKey}::start`,
+      {
+        employee: row.employee,
+        day: row.day,
+        field: "Start",
+        value:
+          normaliseAuditValue(
+            row.start_time
+          )
+      }
+    );
+
+    snapshot.set(
+      `${baseKey}::finish`,
+      {
+        employee: row.employee,
+        day: row.day,
+        field: "Finish",
+        value:
+          normaliseAuditValue(
+            row.finish_time
+          )
+      }
+    );
+
+    snapshot.set(
+      `${baseKey}::split_start`,
+      {
+        employee: row.employee,
+        day: row.day,
+        field: "Split start",
+        value:
+          normaliseAuditValue(
+            split.start
+          )
+      }
+    );
+
+    snapshot.set(
+      `${baseKey}::split_finish`,
+      {
+        employee: row.employee,
+        day: row.day,
+        field: "Split finish",
+        value:
+          normaliseAuditValue(
+            split.finish
+          )
+      }
+    );
+  });
+
+  return snapshot;
+}
+
+function collectAuditDifferences(
+  previousSnapshot,
+  nextSnapshot
+) {
+  const differences = [];
+
+  const keys =
+    new Set([
+      ...previousSnapshot.keys(),
+      ...nextSnapshot.keys()
+    ]);
+
+  keys.forEach((key) => {
+    const previous =
+      previousSnapshot.get(key);
+
+    const next =
+      nextSnapshot.get(key);
+
+    const oldValue =
+      previous?.value || "";
+
+    const newValue =
+      next?.value || "";
+
+    if (oldValue === newValue) {
+      return;
+    }
+
+    const reference =
+      next || previous;
+
+    differences.push({
+      key,
+      employee:
+        reference.employee,
+      day:
+        reference.day,
+      field:
+        reference.field,
+      oldValue,
+      newValue
+    });
+  });
+
+  return differences;
+}
+
+function mergePendingAuditChanges(
+  week,
+  differences
+) {
+  if (!differences.length) {
+    return;
+  }
+
+  if (
+    pendingAuditWeek &&
+    pendingAuditWeek !== week
+  ) {
+    flushPendingAudit();
+  }
+
+  pendingAuditWeek = week;
+
+  differences.forEach((change) => {
+    const existing =
+      pendingAuditChanges.get(
+        change.key
+      );
+
+    if (existing) {
+      existing.newValue =
+        change.newValue;
+
+      if (
+        existing.oldValue ===
+        existing.newValue
+      ) {
+        pendingAuditChanges.delete(
+          change.key
+        );
+      }
+
+      return;
+    }
+
+    pendingAuditChanges.set(
+      change.key,
+      { ...change }
+    );
+  });
+
+  scheduleAuditFlush();
+}
+
+function scheduleAuditFlush() {
+  clearTimeout(auditFlushTimer);
+
+  auditFlushTimer =
+    setTimeout(
+      () => {
+        flushPendingAudit();
+      },
+      AUDIT_FLUSH_DELAY_MS
+    );
+}
+
+function buildAuditDetails(changes) {
+  return changes
+    .map((change) => {
+      const oldDisplay =
+        formatAuditTime(
+          change.oldValue
+        );
+
+      const newDisplay =
+        formatAuditTime(
+          change.newValue
+        );
+
+      return (
+        `${change.day} — ` +
+        `${change.employee} — ` +
+        `${change.field}: ` +
+        `${oldDisplay} → ${newDisplay}`
+      );
+    })
+    .join("\n");
+}
+
+async function flushPendingAudit() {
+  clearTimeout(auditFlushTimer);
+  auditFlushTimer = null;
+
+  if (
+    !pendingAuditChanges.size ||
+    !pendingAuditWeek ||
+    !resolvedAppUser
+  ) {
+    return true;
+  }
+
+  const changes =
+    [...pendingAuditChanges.values()];
+
+  const entry = {
+    changed_by_staff_id:
+      resolvedAppUser.id || null,
+
+    changed_by_name:
+      resolvedAppUser.name,
+
+    device_id:
+      resolvedAppUser.deviceId || null,
+
+    device_type:
+      resolvedAppUser.deviceType || null,
+
+    action_type:
+      "Updated timesheet",
+
+    week_start:
+      pendingAuditWeek,
+
+    employee_name:
+      changes.length === 1
+        ? changes[0].employee
+        : null,
+
+    day_name:
+      changes.length === 1
+        ? changes[0].day
+        : null,
+
+    field_name:
+      changes.length === 1
+        ? changes[0].field
+        : null,
+
+    old_value:
+      changes.length === 1
+        ? changes[0].oldValue || null
+        : null,
+
+    new_value:
+      changes.length === 1
+        ? changes[0].newValue || null
+        : null,
+
+    details:
+      buildAuditDetails(changes),
+
+    environment:
+      window.APP_CONFIG.environment ||
+      (
+        window.APP_CONFIG.isDevelopment
+          ? "development"
+          : "production"
+      )
+  };
+
+  try {
+    await AuditStorage.insert(entry);
+
+    pendingAuditChanges.clear();
+    pendingAuditWeek = "";
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Unable to save audit log:",
+      error
+    );
+
+    scheduleAuditFlush();
+    return false;
+  }
+}
+
+function resetAuditBaseline(rows) {
+  lastSavedAuditSnapshot =
+    buildAuditSnapshot(rows);
+}
+
+async function logImmediateAudit({
+  actionType,
+  week = null,
+  details = null,
+  employee = null,
+  day = null,
+  field = null,
+  oldValue = null,
+  newValue = null
+}) {
+  if (!resolvedAppUser) {
+    return;
+  }
+
+  await flushPendingAudit();
+
+  try {
+    await AuditStorage.insert({
+      changed_by_staff_id:
+        resolvedAppUser.id || null,
+
+      changed_by_name:
+        resolvedAppUser.name,
+
+      device_id:
+        resolvedAppUser.deviceId || null,
+
+      device_type:
+        resolvedAppUser.deviceType || null,
+
+      action_type:
+        actionType,
+
+      week_start:
+        week,
+
+      employee_name:
+        employee,
+
+      day_name:
+        day,
+
+      field_name:
+        field,
+
+      old_value:
+        oldValue,
+
+      new_value:
+        newValue,
+
+      details,
+
+      environment:
+        window.APP_CONFIG.environment ||
+        (
+          window.APP_CONFIG.isDevelopment
+            ? "development"
+            : "production"
+        )
+    });
+  } catch (error) {
+    console.error(
+      "Unable to save immediate audit entry:",
+      error
+    );
+  }
+}
+
 const TimesheetStorage = {
   async save(week, rows) {
     const activeNames = new Set(staffMembers.map((member) => member.name));
@@ -1379,6 +1844,21 @@ async function copyPreviousWeek() {
       copiedRows
     );
 
+    resetAuditBaseline(
+      collectRows()
+    );
+
+    await logImmediateAudit({
+      actionType:
+        "Copied previous week",
+
+      week:
+        destinationWeek,
+
+      details:
+        `Copied timesheet entries from week starting ${formatDateForMessage(sourceWeek)} into week starting ${formatDateForMessage(destinationWeek)}.`
+    });
+
     setSaveButtonState("saved");
 
     setStatus(
@@ -1790,7 +2270,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.1.2"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.2.0"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -2169,6 +2649,8 @@ async function goToCurrentWeek() {
   if (goToCurrentWeekBtn.disabled) {
     return;
   }
+
+  await flushPendingAudit();
 
   weekStart.value =
     getCurrentWeekStartValue();
@@ -2828,6 +3310,15 @@ async function save() {
 
   const rows = collectRows();
 
+  const nextAuditSnapshot =
+    buildAuditSnapshot(rows);
+
+  const auditDifferences =
+    collectAuditDifferences(
+      lastSavedAuditSnapshot,
+      nextAuditSnapshot
+    );
+
   try {
     setSaveButtonState("saving");
 
@@ -2853,6 +3344,14 @@ async function save() {
       false,
       "saved"
     );
+
+    mergePendingAuditChanges(
+      weekStart.value,
+      auditDifferences
+    );
+
+    lastSavedAuditSnapshot =
+      nextAuditSnapshot;
 
     updateClearButtonState();
     closeManagerMenu();
@@ -3078,6 +3577,10 @@ async function load() {
 
     applyTimesheetData(
       timesheetData
+    );
+
+    resetAuditBaseline(
+      collectRows()
     );
 
     setSaveButtonState("saved");
@@ -3914,6 +4417,17 @@ async function clearSelectedWeek() {
       "saved"
     );
 
+    resetAuditBaseline(
+      collectRows()
+    );
+
+    await logImmediateAudit({
+      actionType: "Cleared week",
+      week: weekStart.value,
+      details:
+        "All saved timesheet entries for the selected week were cleared."
+    });
+
     updateClearButtonState();
   } catch (error) {
     console.error(error);
@@ -3953,10 +4467,12 @@ resetBtn
     }
   );
 
-function changeWeek(daysToAdd) {
+async function changeWeek(daysToAdd) {
   if (!weekStart.value) {
     return;
   }
+
+  await flushPendingAudit();
 
   weekStart.value =
     addDaysToDateString(
@@ -3966,7 +4482,7 @@ function changeWeek(daysToAdd) {
 
   updateWeekEnd();
   updateCurrentWeekHighlight();
-  load();
+  await load();
 }
 
 document
@@ -3994,6 +4510,26 @@ document
 goToCurrentWeekBtn.addEventListener(
   "click",
   goToCurrentWeek
+);
+
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+    if (
+      document.visibilityState ===
+      "hidden"
+    ) {
+      flushPendingAudit();
+    }
+  }
+);
+
+window.addEventListener(
+  "pagehide",
+  () => {
+    flushPendingAudit();
+  }
 );
 
 /* =====================================================

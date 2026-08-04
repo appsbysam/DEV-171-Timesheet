@@ -1,5 +1,23 @@
 # 171 Café Staff Timesheet
 
+## Version 3.2.0
+Released: 4 August 2026
+
+### Added
+- Added audit logging for timesheet updates.
+- Preserved automatic saving for safety.
+- Groups multiple auto-saved edits into one audit event after 60 seconds without further changes.
+- Records the identified staff member, staff ID, device ID and device type with each audit event.
+- Stores a readable before-and-after change summary in the audit log.
+- Flushes pending audit changes before changing weeks and when the app is moved into the background.
+- Added immediate audit entries for **Clear Week** and **Copy Previous Week**.
+
+### Notes
+- This release writes audit records to the existing `audit_log` table.
+- The Manager Mode audit viewer will be added separately after audit recording is tested.
+
+---
+
 ## Version 3.1.2
 Released: 4 August 2026
 
@@ -180,7 +198,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.1.2**
+-   Current production version: **3.2.0**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

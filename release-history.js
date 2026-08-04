@@ -1,5 +1,17 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.2.0",
+    date: "4 August 2026",
+    changes: [
+      "Added audit logging for timesheet changes.",
+      "Kept the existing automatic saving behaviour.",
+      "Groups auto-saved changes into one readable audit event after 60 seconds of inactivity.",
+      "Flushes pending audit changes when switching weeks or leaving the app.",
+      "Records user name, staff ID, device ID and device type in the background.",
+      "Added immediate audit records for Clear Week and Copy Previous Week."
+    ]
+  },
+  {
     version: "3.1.2",
     date: "4 August 2026",
     changes: [

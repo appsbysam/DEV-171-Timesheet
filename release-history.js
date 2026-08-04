@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.1.2",
+    date: "4 August 2026",
+    changes: [
+      "Added the identified staff name beside the version number in the header.",
+      "The displayed name uses the official staff spelling stored by the identity system.",
+      "The header updates immediately after identification or identity reset.",
+      "Kept the display compact on both desktop and mobile."
+    ]
+  },
+  {
     version: "3.1.1",
     date: "4 August 2026",
     changes: [

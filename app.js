@@ -478,6 +478,27 @@ function readStoredUserIdentity() {
   };
 }
 
+function updateHeaderUserIdentity() {
+  const headerUser =
+    document.getElementById(
+      "headerUserIdentity"
+    );
+
+  if (!headerUser) {
+    return;
+  }
+
+  const storedName =
+    localStorage.getItem(
+      USER_NAME_STORAGE_KEY
+    );
+
+  headerUser.textContent =
+    storedName
+      ? `👤 ${storedName}`
+      : "";
+}
+
 function storeUserIdentity(member) {
   localStorage.setItem(
     USER_ID_STORAGE_KEY,
@@ -499,6 +520,8 @@ function storeUserIdentity(member) {
     ...device
   };
 
+  updateHeaderUserIdentity();
+
   return resolvedAppUser;
 }
 
@@ -512,6 +535,7 @@ function clearStoredUserIdentity() {
   );
 
   resolvedAppUser = null;
+  updateHeaderUserIdentity();
 }
 
 function showIdentityModal() {
@@ -1766,7 +1790,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.1.1"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.1.2"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -1790,10 +1814,30 @@ function addModeBadge() {
 
   badgeRow.appendChild(badge);
 
+  const versionRow =
+    document.createElement("div");
+
+  versionRow.className =
+    "header-user-version-row";
+
+  const headerUser =
+    document.createElement("span");
+
+  headerUser.id =
+    "headerUserIdentity";
+
+  headerUser.className =
+    "header-user-identity";
+
+  versionRow.appendChild(headerUser);
+  versionRow.appendChild(version);
+
   wrapper.appendChild(badgeRow);
-  wrapper.appendChild(version);
+  wrapper.appendChild(versionRow);
 
   header.appendChild(wrapper);
+
+  updateHeaderUserIdentity();
 }
 
 

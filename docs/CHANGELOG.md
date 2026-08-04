@@ -1,5 +1,16 @@
 # 171 Café Staff Timesheet
 
+## Version 3.1.2
+Released: 4 August 2026
+
+### Added
+- Displays the identified staff member beside the version number in the app header.
+- Uses the official staff name stored by the identity system.
+- Updates the header immediately after successful identification.
+- Keeps the user display compact on desktop and mobile.
+
+---
+
 ## Version 3.1.1
 Released: 4 August 2026
 
@@ -169,7 +180,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.1.1**
+-   Current production version: **3.1.2**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

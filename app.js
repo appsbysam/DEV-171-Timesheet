@@ -1541,7 +1541,9 @@ function auditActionLabel(actionType) {
     "Cleared week":
       "Cleared Week",
     "Copied previous week":
-      "Copied Previous Week"
+      "Copied Previous Week",
+    "Accessed timesheet":
+      "Accessed Timesheet"
   };
 
   return labels[actionType] ||
@@ -3349,7 +3351,7 @@ function addModeBadge() {
   const version = document.createElement("button");
   version.className = "app-version app-version-button";
   version.type = "button";
-  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.5.7"}`;
+  version.textContent = `Version ${window.APP_DISPLAY_VERSION || "3.5.8"}`;
   version.title = "View version history";
   version.setAttribute("aria-label", "View version history");
 
@@ -3976,8 +3978,40 @@ function buildTimesheet() {
       node.querySelector(".employeeRows");
 
     block.dataset.day = day;
-    heading.textContent =
+
+    const dayIndex =
+      days.indexOf(day);
+
+    const dayDate =
+      addDaysToDateString(
+        weekStart.value,
+        dayIndex
+      );
+
+    const dayNameElement =
+      document.createElement("span");
+
+    dayNameElement.className =
+      "day-heading-name";
+
+    dayNameElement.textContent =
       day.toUpperCase();
+
+    const dayDateElement =
+      document.createElement("span");
+
+    dayDateElement.className =
+      "day-heading-date";
+
+    dayDateElement.textContent =
+      formatDateForMessage(
+        dayDate
+      );
+
+    heading.replaceChildren(
+      dayNameElement,
+      dayDateElement
+    );
 
     staffMembers.forEach((member) => {
       employeeRows.appendChild(
@@ -6573,6 +6607,18 @@ async function initialiseApp() {
 
   await refreshManagerControlState();
   await load();
+
+  await logImmediateAudit({
+    actionType:
+      "Accessed timesheet",
+
+    week:
+      weekStart.value,
+
+    details:
+      `Opened Staff Timesheet for week starting ${formatDateForMessage(weekStart.value)}.`
+  });
+
   updateClearButtonState();
   applyInactiveRestrictedMode();
 

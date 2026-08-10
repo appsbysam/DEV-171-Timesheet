@@ -1,5 +1,15 @@
 window.RELEASE_HISTORY = [
   {
+    version: "3.5.9",
+    date: "11 August 2026",
+    changes: [
+      "Update Available now displays the actual deployed version number.",
+      "The version is read dynamically from version.js and is not hard-coded.",
+      "The available version is highlighted in green for easier identification.",
+      "No database changes are required."
+    ]
+  },
+  {
     version: "3.5.8",
     date: "10 August 2026",
     changes: [

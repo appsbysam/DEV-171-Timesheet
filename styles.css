@@ -4569,3 +4569,16 @@ body.my-profile-modal-open {
   text-align: right;
   opacity: 0.92;
 }
+
+
+/* =====================================================
+   UPDATE VERSION DISPLAY — v3.5.9
+   ===================================================== */
+
+.app-update-version {
+  display: inline-block;
+  margin: 5px 0 2px;
+  color: #159443;
+  font-size: 16px;
+  font-weight: 900;
+}

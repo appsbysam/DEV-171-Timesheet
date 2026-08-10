@@ -1,5 +1,19 @@
 # 171 Café Staff Timesheet
 
+## Version 3.5.9
+Released: 11 August 2026
+
+### Improved
+- The **Update Available** popup now shows the exact deployed version.
+- The version number is read dynamically from `version.js`.
+- The displayed version is highlighted in green and bold.
+- Future releases automatically display their own version number without changing the popup text.
+
+### Database
+- No Supabase database changes are required.
+
+---
+
 ## Version 3.5.8
 Released: 10 August 2026
 
@@ -531,7 +545,7 @@ Released: 4 August 2026
 
 ## Documentation Notes
 
--   Current production version: **3.5.8**
+-   Current production version: **3.5.9**
 -   DEV builds automatically display the `-dev` suffix.
 -   Version numbering is controlled through `version.js` and
     `config.js`.

@@ -1,4 +1,4 @@
-/* v3.9.2 DEV — add and synchronise "Did not work" in timesheet dropdowns. */
+/* v3.9.3 DEV — add and synchronise "Did not work" in timesheet dropdowns. */
 (function () {
   const DID_NOT_WORK = "DID_NOT_WORK";
 
@@ -78,15 +78,27 @@
 
     const pair = getPair(select, row);
     if (!pair) return;
-    addOption(pair);
 
-    if (select.value === DID_NOT_WORK) {
-      if (pair.value !== DID_NOT_WORK) pair.value = DID_NOT_WORK;
-      return;
-    }
+    const selectedDidNotWork = select.value === DID_NOT_WORK;
+    const pairWasDidNotWork = pair.value === DID_NOT_WORK;
 
-    if (pair.value === DID_NOT_WORK) {
-      pair.value = "";
-    }
+    /*
+      Start-time changes cause the main app to rebuild the Finish dropdown.
+      Run the pairing after that rebuild has completed so the full Finish
+      time list remains intact and the selected value is then synchronised.
+    */
+    setTimeout(() => {
+      addOption(select);
+      addOption(pair);
+
+      if (selectedDidNotWork) {
+        pair.value = DID_NOT_WORK;
+        return;
+      }
+
+      if (pairWasDidNotWork) {
+        pair.value = "";
+      }
+    }, 0);
   }, true);
 })();

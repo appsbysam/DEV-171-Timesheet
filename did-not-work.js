@@ -1,4 +1,4 @@
-/* v3.9.1 DEV — add "Did not work" to every timesheet time dropdown. */
+/* v3.9.2 DEV — add and synchronise "Did not work" in timesheet dropdowns. */
 (function () {
   const DID_NOT_WORK = "DID_NOT_WORK";
 
@@ -22,6 +22,14 @@
     document.querySelectorAll(".shift-row select").forEach(addOption);
   }
 
+  function getPair(select, row) {
+    if (select.classList.contains("start")) return row.querySelector(".finish");
+    if (select.classList.contains("finish")) return row.querySelector(".start");
+    if (select.classList.contains("split-start")) return row.querySelector(".split-finish");
+    if (select.classList.contains("split-finish")) return row.querySelector(".split-start");
+    return null;
+  }
+
   addToAll();
 
   const observer = new MutationObserver((mutations) => {
@@ -41,7 +49,6 @@
 
   observer.observe(document.body, { childList: true, subtree: true });
 
-  /* Treat "Did not work" as a completed zero-hour shift instead of a time value. */
   if (typeof window.calculateShiftMinutes === "function") {
     const originalCalculateShiftMinutes = window.calculateShiftMinutes;
     window.calculateShiftMinutes = function (startSelect, finishSelect) {
@@ -62,28 +69,24 @@
     };
   }
 
-  /* If either dropdown is marked "Did not work", mark its matching pair too. */
   document.addEventListener("change", (event) => {
     const select = event.target;
     if (!(select instanceof HTMLSelectElement) || !select.matches(".shift-row select")) return;
-    if (select.value !== DID_NOT_WORK) return;
 
     const row = select.closest(".shift-row");
     if (!row) return;
 
-    const pair = select.classList.contains("start")
-      ? row.querySelector(".finish")
-      : select.classList.contains("finish")
-        ? row.querySelector(".start")
-        : select.classList.contains("split-start")
-          ? row.querySelector(".split-finish")
-          : select.classList.contains("split-finish")
-            ? row.querySelector(".split-start")
-            : null;
+    const pair = getPair(select, row);
+    if (!pair) return;
+    addOption(pair);
 
-    if (pair && pair.value !== DID_NOT_WORK) {
-      addOption(pair);
-      pair.value = DID_NOT_WORK;
+    if (select.value === DID_NOT_WORK) {
+      if (pair.value !== DID_NOT_WORK) pair.value = DID_NOT_WORK;
+      return;
+    }
+
+    if (pair.value === DID_NOT_WORK) {
+      pair.value = "";
     }
   }, true);
 })();

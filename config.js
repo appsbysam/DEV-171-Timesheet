@@ -6,7 +6,14 @@
     production: {environment:"production",isDevelopment:false,supabaseUrl:SHARED_SUPABASE_URL,supabaseKey:SHARED_SUPABASE_KEY,pageTitle:"Café Staff Timesheet",appHeading:"Staff Timesheet",buildLabel:"",modeSuffix:"",manifestFile:"manifest-production.json",versionSuffix:""},
     development: {environment:"development",isDevelopment:true,supabaseUrl:SHARED_SUPABASE_URL,supabaseKey:SHARED_SUPABASE_KEY,pageTitle:"DEV — Café Staff Timesheet",appHeading:"Staff Timesheet",buildLabel:"⚠ DEV BUILD",modeSuffix:" • DEV",manifestFile:"manifest-dev.json",versionSuffix:"-dev"}
   };
-  function detectEnvironment(){const saved=localStorage.getItem("171-timesheet-environment");if(saved==="development"||saved==="production")return saved;const text=`${location.hostname}${location.pathname}`.toLowerCase();return text.includes("dev-171-timesheet")?"development":"production"}
+  function detectEnvironment(){
+    const text=`${location.hostname}${location.pathname}`.toLowerCase();
+    /* The DEV GitHub Pages site is permanently locked to DEV data. */
+    if(text.includes("dev-171-timesheet"))return "development";
+    const saved=localStorage.getItem("171-timesheet-environment");
+    if(saved==="development"||saved==="production")return saved;
+    return "production";
+  }
   const selected=detectEnvironment();window.TIMESHEET_ENV=selected;window.APP_CONFIG=Object.freeze(environments[selected]);
 
   /*
@@ -48,6 +55,12 @@
     };
   }
 
-  window.switchTimesheetEnvironment=function(environment){if(environment==="auto"){localStorage.removeItem("171-timesheet-environment");location.reload();return}if(!environments[environment])throw new Error('Use "development", "production", or "auto".');localStorage.setItem("171-timesheet-environment",environment);location.reload()};
+  window.switchTimesheetEnvironment=function(environment){
+    const text=`${location.hostname}${location.pathname}`.toLowerCase();
+    if(text.includes("dev-171-timesheet")){localStorage.setItem("171-timesheet-environment","development");location.reload();return}
+    if(environment==="auto"){localStorage.removeItem("171-timesheet-environment");location.reload();return}
+    if(!environments[environment])throw new Error('Use "development", "production", or "auto".');
+    localStorage.setItem("171-timesheet-environment",environment);location.reload()
+  };
   window.addEventListener("DOMContentLoaded",()=>{for(const file of ["promotion-admin.js","notifications.js","notification-settings.js","timesheet-safeguards.js","did-not-work.js"]){const s=document.createElement("script");s.src=`${file}?v=${Date.now()}`;document.body.appendChild(s)}});
 })();

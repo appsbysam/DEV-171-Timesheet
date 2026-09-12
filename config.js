@@ -17,6 +17,13 @@
   const selected=detectEnvironment();window.TIMESHEET_ENV=selected;window.APP_CONFIG=Object.freeze(environments[selected]);
 
   /*
+    Load the Did Not Work helper from the document head so its DOMContentLoaded
+    handler runs before the main app startup and adds DID_NOT_WORK to the row
+    template before saved values are restored.
+  */
+  document.write('<script src="did-not-work.js?startup=' + Date.now() + '"><\/script>');
+
+  /*
     DEV and LIVE now share one Supabase project, but DEV is isolated behind
     dev_ tables/RPCs/functions. Rewrite only DEV Supabase API requests so the
     existing application code can never address the LIVE objects by mistake.
@@ -62,5 +69,5 @@
     if(!environments[environment])throw new Error('Use "development", "production", or "auto".');
     localStorage.setItem("171-timesheet-environment",environment);location.reload()
   };
-  window.addEventListener("DOMContentLoaded",()=>{for(const file of ["promotion-admin.js","notifications.js","notification-settings.js","timesheet-safeguards.js","did-not-work.js"]){const s=document.createElement("script");s.src=`${file}?v=${Date.now()}`;document.body.appendChild(s)}});
+  window.addEventListener("DOMContentLoaded",()=>{for(const file of ["promotion-admin.js","notifications.js","notification-settings.js","timesheet-safeguards.js"]){const s=document.createElement("script");s.src=`${file}?v=${Date.now()}`;document.body.appendChild(s)}});
 })();

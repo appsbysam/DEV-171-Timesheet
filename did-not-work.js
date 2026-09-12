@@ -1,6 +1,7 @@
-/* v3.9.3 DEV — add and synchronise "Did not work" in timesheet dropdowns. */
+/* v3.9.5 DEV — native/persistent "Did not work" dropdown option and synchronisation. */
 (function () {
   const DID_NOT_WORK = "DID_NOT_WORK";
+  let initialised = false;
 
   function addOption(select) {
     if (!select || !select.matches(".shift-row select")) return;
@@ -20,6 +21,14 @@
 
   function addToAll() {
     document.querySelectorAll(".shift-row select").forEach(addOption);
+
+    /*
+      Add the option directly to the employee-row template before the main app
+      clones it. This means a saved DID_NOT_WORK value already exists as a valid
+      option when saved database rows are restored on startup.
+    */
+    const template = document.getElementById("employeeRowTemplate");
+    template?.content?.querySelectorAll(".shift-row select").forEach(addOption);
   }
 
   function getPair(select, row) {
@@ -30,75 +39,90 @@
     return null;
   }
 
-  addToAll();
+  function initialise() {
+    if (initialised) return;
+    initialised = true;
 
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type !== "childList") continue;
-      const target = mutation.target;
-      if (target instanceof HTMLSelectElement && target.matches(".shift-row select")) {
-        addOption(target);
+    addToAll();
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type !== "childList") continue;
+        const target = mutation.target;
+        if (target instanceof HTMLSelectElement && target.matches(".shift-row select")) {
+          addOption(target);
+        }
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) return;
+          if (node.matches?.(".shift-row select")) addOption(node);
+          node.querySelectorAll?.(".shift-row select").forEach(addOption);
+        });
       }
-      mutation.addedNodes.forEach((node) => {
-        if (!(node instanceof Element)) return;
-        if (node.matches?.(".shift-row select")) addOption(node);
-        node.querySelectorAll?.(".shift-row select").forEach(addOption);
-      });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    if (typeof window.calculateShiftMinutes === "function") {
+      const originalCalculateShiftMinutes = window.calculateShiftMinutes;
+      window.calculateShiftMinutes = function (startSelect, finishSelect) {
+        const startDidNotWork = startSelect.value === DID_NOT_WORK;
+        const finishDidNotWork = finishSelect.value === DID_NOT_WORK;
+
+        if (startDidNotWork && finishDidNotWork) {
+          startSelect.classList.remove("invalid");
+          finishSelect.classList.remove("invalid");
+          return { minutes: 0, complete: true, valid: true };
+        }
+
+        if (startDidNotWork || finishDidNotWork) {
+          return { minutes: 0, complete: false, valid: true };
+        }
+
+        return originalCalculateShiftMinutes(startSelect, finishSelect);
+      };
     }
-  });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener("change", (event) => {
+      const select = event.target;
+      if (!(select instanceof HTMLSelectElement) || !select.matches(".shift-row select")) return;
 
-  if (typeof window.calculateShiftMinutes === "function") {
-    const originalCalculateShiftMinutes = window.calculateShiftMinutes;
-    window.calculateShiftMinutes = function (startSelect, finishSelect) {
-      const startDidNotWork = startSelect.value === DID_NOT_WORK;
-      const finishDidNotWork = finishSelect.value === DID_NOT_WORK;
+      const row = select.closest(".shift-row");
+      if (!row) return;
 
-      if (startDidNotWork && finishDidNotWork) {
-        startSelect.classList.remove("invalid");
-        finishSelect.classList.remove("invalid");
-        return { minutes: 0, complete: true, valid: true };
-      }
+      const pair = getPair(select, row);
+      if (!pair) return;
 
-      if (startDidNotWork || finishDidNotWork) {
-        return { minutes: 0, complete: false, valid: true };
-      }
+      const selectedDidNotWork = select.value === DID_NOT_WORK;
+      const pairWasDidNotWork = pair.value === DID_NOT_WORK;
 
-      return originalCalculateShiftMinutes(startSelect, finishSelect);
-    };
+      /*
+        Start-time changes cause the main app to rebuild the Finish dropdown.
+        Run the pairing after that rebuild so the full normal time list remains.
+      */
+      setTimeout(() => {
+        addOption(select);
+        addOption(pair);
+
+        if (selectedDidNotWork) {
+          pair.value = DID_NOT_WORK;
+          return;
+        }
+
+        if (pairWasDidNotWork) {
+          pair.value = "";
+        }
+      }, 0);
+    }, true);
   }
 
-  document.addEventListener("change", (event) => {
-    const select = event.target;
-    if (!(select instanceof HTMLSelectElement) || !select.matches(".shift-row select")) return;
-
-    const row = select.closest(".shift-row");
-    if (!row) return;
-
-    const pair = getPair(select, row);
-    if (!pair) return;
-
-    const selectedDidNotWork = select.value === DID_NOT_WORK;
-    const pairWasDidNotWork = pair.value === DID_NOT_WORK;
-
-    /*
-      Start-time changes cause the main app to rebuild the Finish dropdown.
-      Run the pairing after that rebuild has completed so the full Finish
-      time list remains intact and the selected value is then synchronised.
-    */
-    setTimeout(() => {
-      addOption(select);
-      addOption(pair);
-
-      if (selectedDidNotWork) {
-        pair.value = DID_NOT_WORK;
-        return;
-      }
-
-      if (pairWasDidNotWork) {
-        pair.value = "";
-      }
-    }, 0);
-  }, true);
+  /*
+    This file is intentionally loaded from the document head. Registering this
+    listener before app.js registers its startup listener lets the template gain
+    DID_NOT_WORK before saved rows are rendered.
+  */
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialise, { once: true });
+  } else {
+    initialise();
+  }
 })();

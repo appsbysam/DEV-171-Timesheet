@@ -1,4 +1,4 @@
-/* v3.9.7 DEV — make "Did not work" survive the app's native dropdown rebuilds. */
+/* v3.9.8 DEV — persist "Did not work" and refresh completed-row state immediately. */
 (function () {
   const DID_NOT_WORK = "DID_NOT_WORK";
   let hooksInstalled = false;
@@ -24,6 +24,16 @@
       select.insertBefore(option, first.nextSibling);
     } else {
       select.appendChild(option);
+    }
+  }
+
+  function refreshRowState(row) {
+    if (typeof window.calculateRow === "function") {
+      window.calculateRow(row);
+    }
+
+    if (typeof window.calculateTotals === "function") {
+      window.calculateTotals();
     }
   }
 
@@ -53,11 +63,6 @@
       day,
       preferredValue = finishSelect.value
     ) {
-      /*
-        The normal app rebuilds the Finish dropdown every time Start changes.
-        Let it do that, then restore the permanent Did not work option and the
-        saved DID_NOT_WORK value if that was the value loaded from Supabase.
-      */
       originalUpdateFinishOptions(
         startSelect,
         finishSelect,
@@ -94,12 +99,6 @@
     return true;
   }
 
-  /*
-    This file loads before app.js. app.js defines its dropdown functions later
-    and immediately starts an async initialisation. Poll briefly so the hooks are
-    installed as soon as those functions exist, before the database rows are
-    normally rendered.
-  */
   if (!installCoreHooks()) {
     const hookTimer = window.setInterval(() => {
       if (installCoreHooks()) {
@@ -141,12 +140,16 @@
 
       if (selectedDidNotWork) {
         pair.value = DID_NOT_WORK;
-        return;
-      }
-
-      if (pairWasDidNotWork) {
+      } else if (pairWasDidNotWork) {
         pair.value = "";
       }
+
+      /*
+        The paired value is changed programmatically, so the app's normal change
+        handler does not run a second time. Recalculate the row now so its
+        completed/green state updates immediately without requiring a refresh.
+      */
+      refreshRowState(row);
     }, 0);
   }, true);
 

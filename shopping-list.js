@@ -1,4 +1,4 @@
-/* DEV shared shopping list — v3.10.4 */
+/* DEV shared shopping list — v3.10.5 */
 (() => {
   const css = `
   #shoppingOpenBtn{background:#1f6d55;color:white;font-weight:700}
@@ -7,6 +7,12 @@
   #shoppingPanel{background:white;color:#222;border-radius:14px;width:min(620px,100%);height:min(92dvh,820px);overflow:hidden;display:flex;flex-direction:column;padding:14px;box-shadow:0 8px 30px #0005}
   #shoppingPanel button{cursor:pointer;padding:9px 12px;border-radius:8px;border:1px solid #ccc;background:#f5f5f5;color:#222}
   #shoppingPanel .shop-primary{background:#196b51;color:white;border-color:#196b51}
+  #shoppingPanel .shop-back{background:#e8edf2;color:#34495e;border-color:#bcc9d6}
+  #shoppingPanel .shop-next{background:#196b51;color:white;border-color:#196b51}
+  #shoppingPanel .shop-settings{background:#e7f0fa;color:#245a8d;border-color:#b6cfe8}
+  #shoppingPanel .shop-ordered{background:#dff3e7;color:#17633c;border-color:#a3d9b7}
+  #shoppingPanel .shop-new{background:#fff0d9;color:#86520d;border-color:#ebc68c}
+  #shoppingPanel .shop-history{background:#eae7f6;color:#594687;border-color:#c9c0e4}
   #shoppingPanel .shop-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #eee;min-height:43px}
   #shoppingPanel input[type=text]{min-width:0;padding:8px;border:1px solid #ccc;border-radius:6px}
   #shoppingPanel .shop-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
@@ -96,8 +102,8 @@
       const {ci,pi}=pages[page],cat=cats[ci];
       const categoryPages=Math.max(1,Math.ceil(cat.items.length/perPage));const heading=el('h3',cat.name+' ('+categoryPages+' '+(categoryPages===1?'page':'pages')+')');heading.style.cssText='background:#e4f3ec;border-left:5px solid #196b51;padding:9px 11px;border-radius:7px;color:#174d3c;font-weight:800';body.append(heading);
       const nav=el('div',undefined,'shop-actions');nav.style.alignItems='center';
-      nav.append(action('◀ Back',()=>{page=Math.max(0,page-1);render()}),action('Next ▶',()=>{page=Math.min(pages.length-1,page+1);render()}));
-      const spacer=el('span');spacer.style.flex='1';nav.append(spacer,action('⚙ Settings',()=>{settings=true;render()}));
+      const back=action('◀ Back',()=>{page=Math.max(0,page-1);render()});back.classList.add('shop-back');const next=action('Next ▶',()=>{page=Math.min(pages.length-1,page+1);render()});next.classList.add('shop-next');nav.append(back,next);
+      const spacer=el('span');spacer.style.flex='1';const settingsBtn=action('⚙ Settings',()=>{settings=true;render()});settingsBtn.classList.add('shop-settings');nav.append(spacer,settingsBtn);
       body.append(nav);
       cat.items.slice(pi*perPage,(pi+1)*perPage).forEach(item=>{
         const row=el('div',undefined,'shop-row');
@@ -114,6 +120,7 @@
     foot.append(action('Mark as ordered',async()=>{if(!confirm('Confirm this shopping list has actually been ordered?'))return;await command('ordered')}),
     action('Start new list',async()=>{if(!confirm('Archive this shared draft and start a new blank checklist for everyone?'))return;await command('new')}),
     action('Order history',history));
+    ['shop-ordered','shop-new','shop-history'].forEach((name,i)=>foot.children[i]?.classList.add(name));
     body.append(foot);
     if(!preview){const pages=cats.reduce((n,cat)=>n+Math.max(1,Math.ceil(cat.items.length/perPage)),0);const footer=el('div','Page '+(page+1)+' of '+pages);footer.style.cssText='text-align:center;color:#777;font-size:.9rem;font-weight:700;margin:12px 0 4px';body.append(footer)}
   }

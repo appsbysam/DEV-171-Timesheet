@@ -1,4 +1,4 @@
-/* DEV shared shopping list — v3.10.2 */
+/* DEV shared shopping list — v3.10.3 */
 (() => {
   const css = `
   #shoppingOpenBtn{background:#1f6d55;color:white;font-weight:700}
@@ -92,7 +92,7 @@
       const pages=cats.flatMap((c,ci)=>Array.from({length:Math.max(1,Math.ceil(c.items.length/perPage))},(_,pi)=>({ci,pi})));
       page=Math.max(0,Math.min(page,pages.length-1));
       const {ci,pi}=pages[page],cat=cats[ci];
-      const heading=el('h3',cat.name+' — page '+(page+1)+' of '+pages.length);body.append(heading);
+      const categoryPages=Math.max(1,Math.ceil(cat.items.length/perPage));const heading=el('h3',cat.name+' ('+categoryPages+' '+(categoryPages===1?'page':'pages')+')');heading.style.cssText='background:#e4f3ec;border-left:5px solid #196b51;padding:9px 11px;border-radius:7px;color:#174d3c;font-weight:800';body.append(heading);
       const nav=el('div',undefined,'shop-actions');nav.style.alignItems='center';
       nav.append(action('◀ Back',()=>{page=Math.max(0,page-1);render()}),action('Next ▶',()=>{page=Math.min(pages.length-1,page+1);render()}));
       const spacer=el('span');spacer.style.flex='1';nav.append(spacer,action('⚙ Settings',()=>{settings=true;render()}));
@@ -113,6 +113,7 @@
     action('Start new list',async()=>{if(!confirm('Archive this shared draft and start a new blank checklist for everyone?'))return;await command('new')}),
     action('Order history',history));
     body.append(foot);
+    if(!preview){const pages=cats.reduce((n,cat)=>n+Math.max(1,Math.ceil(cat.items.length/perPage)),0);const footer=el('div','Page '+(page+1)+' of '+pages);footer.style.cssText='text-align:center;color:#777;font-size:.9rem;margin:12px 0 4px';body.append(footer)}
   }
   async function command(name){if(busy||saving||pendingSave){alert('Please wait for your changes to save first.');return}busy=true;try{const result=await rpc(name,null,current.revision);if(name==='ordered'){say('Marked ordered. Start a new list when ready.');current=null;body.replaceChildren();body.append(action('Start next list',async()=>{try{current=await rpc('new',null,result.revision);page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}}))}else{current=result;preview=false;page=0;say('New shared list started');render()}}catch(e){say(e.message,true)}finally{busy=false}}
   async function history(){try{const items=await rpc('history');body.replaceChildren();body.append(el('h3','Previous shopping lists'));for(const x of items){const b=action(new Date(x.created_at).toLocaleDateString('en-AU')+' — '+x.status,()=>{body.replaceChildren();body.append(el('pre',x.state.categories.map(c=>c.name+'\n'+c.items.filter(i=>i.selected).map(i=>'• '+i.name+(i.note?' — '+i.note:'')).join('\n')).join('\n\n')));body.append(action('Back',render))});body.append(b)}body.append(action('Back to current list',render))}catch(e){say(e.message,true)}}

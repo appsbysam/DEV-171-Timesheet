@@ -1,4 +1,4 @@
-/* DEV shared shopping list — v3.10.1 */
+/* DEV shared shopping list — v3.10.2 */
 (() => {
   const css = `
   #shoppingOpenBtn{background:#1f6d55;color:white;font-weight:700}
@@ -23,7 +23,7 @@
   document.body.appendChild(overlay);
   const body=overlay.querySelector('#shopBody'), status=overlay.querySelector('#shopStatus');
   let current=null,page=0,preview=false,busy=false,settings=false;
-  const perPage=7;
+  const perPage=8;
   const button=document.createElement('button');button.id='shoppingOpenBtn';button.type='button';button.textContent='🛒 Shopping List';
   const print=document.querySelector('#printBtn'); if(print) print.insertAdjacentElement('afterend',button);
   else document.querySelector('.toolbar')?.appendChild(button);
@@ -36,14 +36,33 @@
     const {data,error}=await db.rpc('dev_shopping_action',{p_token:managerSessionToken,p_action:actionName,p_state:state,p_revision:revision});
     if(error)throw Error(error.message);return data;
   }
-  async function load(){say('Loading shared list…');current=await rpc('load');if(!current.id){body.replaceChildren();body.append(el('p','Previous list was ordered. Start a fresh shopping list when ready.'));body.append(action('Start new list',async()=>{try{current=await rpc('new');page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}} ,true));return;}say('');render()}
+  async function load(){generation++;pendingSave=false;say('Loading shared list…');current=await rpc('load');if(!current.id){body.replaceChildren();body.append(el('p','Previous list was ordered. Start a fresh shopping list when ready.'));body.append(action('Start new list',async()=>{try{current=await rpc('new');page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}} ,true));return;}say('');render()}
+  let pendingSave=false, saving=false, generation=0;
   async function save(){
-    if(busy||!current)return;
-    busy=true;say('Saving…');
-    try{current=await rpc('save',current.state,current.revision);say('✓ Saved for everyone')}catch(e){say(e.message,true);alert(e.message+'\nReopening the latest shared list.');await load().catch(e=>say(e.message,true))}
-    finally{busy=false}
+    pendingSave=true;
+    if(saving||!current)return;
+    saving=true;
+    const myGeneration=generation;
+    try{
+      while(pendingSave&&current&&myGeneration===generation){
+        pendingSave=false;
+        const snapshot=JSON.parse(JSON.stringify(current.state));
+        const id=current.id,revision=current.revision;
+        say('Saving…');
+        const result=await rpc('save',snapshot,revision);
+        if(myGeneration!==generation||current?.id!==id)return;
+        current.revision=result.revision;
+      }
+      if(myGeneration===generation)say('✓ Saved');
+    }catch(e){
+      pendingSave=false;
+      say(e.message,true);
+      alert('Shopping list could not be saved. Reloading the latest list.\\n'+e.message);
+      generation++;
+      await load().catch(err=>say(err.message,true));
+    }finally{saving=false;if(pendingSave&&current)void save()}
   }
-  async function change(fn){if(busy)return;fn();render();await save()}
+  function change(fn){if(!current)return;fn();render();void save()}
   function allItems(){return current.state.categories.flatMap(c=>c.items.filter(i=>i.selected).map(i=>({category:c.name,...i})))}
   function listText(){const groups=current.state.categories.map(c=>({name:c.name,items:c.items.filter(i=>i.selected)})).filter(g=>g.items.length);
     return '171 CAFÉ — SHOPPING LIST\n\n'+groups.map(g=>g.name.toUpperCase()+'\n'+g.items.map(i=>'• '+i.name+(i.note?' — '+i.note:'')).join('\n')).join('\n\n')}
@@ -95,7 +114,7 @@
     action('Order history',history));
     body.append(foot);
   }
-  async function command(name){if(busy)return;busy=true;try{const result=await rpc(name,null,current.revision);if(name==='ordered'){say('Marked ordered. Start a new list when ready.');current=null;body.replaceChildren();body.append(action('Start next list',async()=>{try{current=await rpc('new',null,result.revision);page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}}))}else{current=result;preview=false;page=0;say('New shared list started');render()}}catch(e){say(e.message,true)}finally{busy=false}}
+  async function command(name){if(busy||saving||pendingSave){alert('Please wait for your changes to save first.');return}busy=true;try{const result=await rpc(name,null,current.revision);if(name==='ordered'){say('Marked ordered. Start a new list when ready.');current=null;body.replaceChildren();body.append(action('Start next list',async()=>{try{current=await rpc('new',null,result.revision);page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}}))}else{current=result;preview=false;page=0;say('New shared list started');render()}}catch(e){say(e.message,true)}finally{busy=false}}
   async function history(){try{const items=await rpc('history');body.replaceChildren();body.append(el('h3','Previous shopping lists'));for(const x of items){const b=action(new Date(x.created_at).toLocaleDateString('en-AU')+' — '+x.status,()=>{body.replaceChildren();body.append(el('pre',x.state.categories.map(c=>c.name+'\n'+c.items.filter(i=>i.selected).map(i=>'• '+i.name+(i.note?' — '+i.note:'')).join('\n')).join('\n\n')));body.append(action('Back',render))});body.append(b)}body.append(action('Back to current list',render))}catch(e){say(e.message,true)}}
   button.onclick=async()=>{overlay.hidden=false;preview=false;settings=false;body.replaceChildren();try{await load()}catch(e){say(e.message,true)}};
   overlay.querySelector('#shopClose').onclick=()=>overlay.hidden=true;

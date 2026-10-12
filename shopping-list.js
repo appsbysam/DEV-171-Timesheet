@@ -36,7 +36,7 @@
     const {data,error}=await db.rpc('dev_shopping_action',{p_token:managerSessionToken,p_action:actionName,p_state:state,p_revision:revision});
     if(error)throw Error(error.message);return data;
   }
-  async function load(){say('Loading shared list…');current=await rpc('load');if(!current.id)throw Error('Shopping list unavailable');say('Shared across staff • Changes saved to DEV cloud');render()}
+  async function load(){say('Loading shared list…');current=await rpc('load');if(!current.id){body.replaceChildren();body.append(el('p','Previous list was ordered. Start a fresh shopping list when ready.'));body.append(action('Start new list',async()=>{try{current=await rpc('new');page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}} ,true));return;}say('Shared across staff • Changes saved to DEV cloud');render()}
   async function save(){
     if(busy||!current)return;
     busy=true;say('Saving…');
@@ -91,7 +91,7 @@
     action('Order history',history));
     body.append(foot);
   }
-  async function command(name){if(busy)return;busy=true;try{const result=await rpc(name,null,current.revision);if(name==='ordered'){say('Marked ordered. Start a new list when ready.');current=null;body.replaceChildren();body.append(action('Start next list',async()=>{try{await rpc('new',null,result.revision)}catch(e){say('Please reopen to start the next list',true)}}))}else{current=result;preview=false;page=0;say('New shared list started');render()}}catch(e){say(e.message,true)}finally{busy=false}}
+  async function command(name){if(busy)return;busy=true;try{const result=await rpc(name,null,current.revision);if(name==='ordered'){say('Marked ordered. Start a new list when ready.');current=null;body.replaceChildren();body.append(action('Start next list',async()=>{try{current=await rpc('new',null,result.revision);page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}}))}else{current=result;preview=false;page=0;say('New shared list started');render()}}catch(e){say(e.message,true)}finally{busy=false}}
   async function history(){try{const items=await rpc('history');body.replaceChildren();body.append(el('h3','Previous shopping lists'));for(const x of items){const b=action(new Date(x.created_at).toLocaleDateString('en-AU')+' — '+x.status,()=>{body.replaceChildren();body.append(el('pre',x.state.categories.map(c=>c.name+'\n'+c.items.filter(i=>i.selected).map(i=>'• '+i.name+(i.note?' — '+i.note:'')).join('\n')).join('\n\n')));body.append(action('Back',render))});body.append(b)}body.append(action('Back to current list',render))}catch(e){say(e.message,true)}}
   button.onclick=async()=>{overlay.hidden=false;preview=false;body.replaceChildren();try{await load()}catch(e){say(e.message,true)}};
   overlay.querySelector('#shopClose').onclick=()=>overlay.hidden=true;

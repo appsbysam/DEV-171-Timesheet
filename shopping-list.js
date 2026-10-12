@@ -1,4 +1,4 @@
-/* DEV shared shopping list — v3.10.3 */
+/* DEV shared shopping list — v3.10.4 */
 (() => {
   const css = `
   #shoppingOpenBtn{background:#1f6d55;color:white;font-weight:700}
@@ -14,14 +14,16 @@
   #shoppingPanel .shop-name{flex:1;min-width:0;overflow-wrap:anywhere}
   #shopBody{overflow-y:auto;min-height:0;flex:1}#shoppingPanel h2{margin:4px 0}#shoppingPanel h3{margin:10px 0}#shoppingPanel .shop-error{color:#ad2323}
   #shoppingPanel .shop-muted{color:#666;font-size:.85em}
+  #shopSummaryBar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 8px;color:#666;font-size:.85em}
+  #shopSelectedCount{text-align:left}#shopStatus{text-align:right;margin-left:auto}
   `;
   const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
   const overlay=document.createElement('div');overlay.id='shoppingOverlay';overlay.hidden=true;
   overlay.innerHTML=`<section id="shoppingPanel" role="dialog" aria-modal="true" aria-label="Shared shopping list">
   <div style="display:flex;justify-content:space-between;align-items:center"><h2>🛒 Shopping List</h2><button id="shopClose" type="button">✕</button></div>
-  <p id="shopStatus" class="shop-muted" role="status"></p><div id="shopBody"></div></section>`;
+  <div id="shopSummaryBar"><span id="shopSelectedCount"></span><span id="shopStatus" class="shop-muted" role="status"></span></div><div id="shopBody"></div></section>`;
   document.body.appendChild(overlay);
-  const body=overlay.querySelector('#shopBody'), status=overlay.querySelector('#shopStatus');
+  const body=overlay.querySelector('#shopBody'), status=overlay.querySelector('#shopStatus'), selectedCount=overlay.querySelector('#shopSelectedCount');
   let current=null,page=0,preview=false,busy=false,settings=false;
   const perPage=8;
   const button=document.createElement('button');button.id='shoppingOpenBtn';button.type='button';button.textContent='🛒 Shopping List';
@@ -69,7 +71,7 @@
   function render(){
     body.replaceChildren();if(!current)return;
     const cats=current.state.categories,selected=allItems().length;
-    const top=el('div',selected+' item(s) selected','shop-muted');body.append(top);
+    selectedCount.textContent=selected+' item(s) selected';
     if(settings){
       body.append(el('h3','Product & Category Settings'));
       const cats=current.state.categories;
@@ -113,7 +115,7 @@
     action('Start new list',async()=>{if(!confirm('Archive this shared draft and start a new blank checklist for everyone?'))return;await command('new')}),
     action('Order history',history));
     body.append(foot);
-    if(!preview){const pages=cats.reduce((n,cat)=>n+Math.max(1,Math.ceil(cat.items.length/perPage)),0);const footer=el('div','Page '+(page+1)+' of '+pages);footer.style.cssText='text-align:center;color:#777;font-size:.9rem;margin:12px 0 4px';body.append(footer)}
+    if(!preview){const pages=cats.reduce((n,cat)=>n+Math.max(1,Math.ceil(cat.items.length/perPage)),0);const footer=el('div','Page '+(page+1)+' of '+pages);footer.style.cssText='text-align:center;color:#777;font-size:.9rem;font-weight:700;margin:12px 0 4px';body.append(footer)}
   }
   async function command(name){if(busy||saving||pendingSave){alert('Please wait for your changes to save first.');return}busy=true;try{const result=await rpc(name,null,current.revision);if(name==='ordered'){say('Marked ordered. Start a new list when ready.');current=null;body.replaceChildren();body.append(action('Start next list',async()=>{try{current=await rpc('new',null,result.revision);page=0;preview=false;render();say('New shared list started')}catch(e){say(e.message,true)}}))}else{current=result;preview=false;page=0;say('New shared list started');render()}}catch(e){say(e.message,true)}finally{busy=false}}
   async function history(){try{const items=await rpc('history');body.replaceChildren();body.append(el('h3','Previous shopping lists'));for(const x of items){const b=action(new Date(x.created_at).toLocaleDateString('en-AU')+' — '+x.status,()=>{body.replaceChildren();body.append(el('pre',x.state.categories.map(c=>c.name+'\n'+c.items.filter(i=>i.selected).map(i=>'• '+i.name+(i.note?' — '+i.note:'')).join('\n')).join('\n\n')));body.append(action('Back',render))});body.append(b)}body.append(action('Back to current list',render))}catch(e){say(e.message,true)}}

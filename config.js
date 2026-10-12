@@ -69,5 +69,5 @@
     if(!environments[environment])throw new Error('Use "development", "production", or "auto".');
     localStorage.setItem("171-timesheet-environment",environment);location.reload()
   };
-  window.addEventListener("DOMContentLoaded",()=>{for(const file of ["promotion-admin.js","notifications.js","notification-settings.js","timesheet-safeguards.js"]){const s=document.createElement("script");s.src=`${file}?v=${Date.now()}`;document.body.appendChild(s)}});
+  window.addEventListener("DOMContentLoaded",()=>{for(const file of ["promotion-admin.js","notifications.js","notification-settings.js","timesheet-safeguards.js","shopping-list.js"]){const s=document.createElement("script");s.src=`${file}?v=${Date.now()}`;document.body.appendChild(s)}});
 })();
